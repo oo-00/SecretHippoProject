@@ -77,17 +77,20 @@
     "fnSig": "addRewardCaller(address)",
     "intrinsicGas": [
      21432,
+     21432,
      21432
     ],
     "callData": [
+     0,
      0,
      0
     ],
     "gasData": [
      49632,
+     49632,
      49632
     ],
-    "numberOfCalls": 2,
+    "numberOfCalls": 3,
     "executionGasAverage": 49632,
     "calldataGasAverage": 0,
     "min": 49632,
@@ -101,20 +104,26 @@
     "fnSig": "approveStrategy(address,bool)",
     "intrinsicGas": [
      21572,
-     21572
+     21560,
+     21572,
+     21560
     ],
     "callData": [
+     0,
+     0,
      0,
      0
     ],
     "gasData": [
-     56487,
+     56475,
+     56475,
+     56540,
      56540
     ],
-    "numberOfCalls": 2,
-    "executionGasAverage": 56514,
+    "numberOfCalls": 4,
+    "executionGasAverage": 56508,
     "calldataGasAverage": 0,
-    "min": 56487,
+    "min": 56475,
     "max": 56540
    },
    "magicHarvester_a3fbbaae": {
@@ -246,21 +255,39 @@
     "fnSig": "setRoute(address,(address,address,address,uint256,uint256,uint256)[],address,uint256,bool)",
     "intrinsicGas": [
      28396,
+     23896,
+     23896,
+     23896,
+     23896,
+     23896,
+     28396,
      23896
     ],
     "callData": [
      0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
      0
     ],
     "gasData": [
-     265981,
-     1076646
+     134504,
+     134504,
+     267630,
+     267630,
+     711362,
+     711362,
+     1075896,
+     1075896
     ],
-    "numberOfCalls": 2,
-    "executionGasAverage": 671314,
+    "numberOfCalls": 8,
+    "executionGasAverage": 547348,
     "calldataGasAverage": 0,
-    "min": 265981,
-    "max": 1076646
+    "min": 134504,
+    "max": 1075896
    },
    "magicPounder_beb636bb": {
     "key": "beb636bb",
@@ -390,15 +417,18 @@
     "method": "setMagicStaker",
     "fnSig": "setMagicStaker(address)",
     "intrinsicGas": [
+     21432,
      21432
     ],
     "callData": [
+     0,
      0
     ],
     "gasData": [
+     73378,
      73378
     ],
-    "numberOfCalls": 1,
+    "numberOfCalls": 2,
     "executionGasAverage": 73378,
     "calldataGasAverage": 0,
     "min": 73378,
@@ -1332,22 +1362,25 @@
     "method": "addStrategy",
     "fnSig": "addStrategy(address)",
     "intrinsicGas": [
-     21432,
-     21432
+     21420,
+     21420,
+     21420
     ],
     "callData": [
+     0,
      0,
      0
     ],
     "gasData": [
-     91632,
-     91632
+     91622,
+     91622,
+     91622
     ],
-    "numberOfCalls": 2,
-    "executionGasAverage": 91632,
+    "numberOfCalls": 3,
+    "executionGasAverage": 91622,
     "calldataGasAverage": 0,
-    "min": 91632,
-    "max": 91632
+    "min": 91622,
+    "max": 91622
    },
    "magicStaker_70a08231": {
     "key": "70a08231",
@@ -1406,13 +1439,13 @@
      0
     ],
     "gasData": [
-     58938
+     103484
     ],
     "numberOfCalls": 1,
-    "executionGasAverage": 58938,
+    "executionGasAverage": 103484,
     "calldataGasAverage": 0,
-    "min": 58938,
-    "max": 58938
+    "min": 103484,
+    "max": 103484
    },
    "magicStaker_12cf9dad": {
     "key": "12cf9dad",
@@ -1459,18 +1492,18 @@
      0
     ],
     "gasData": [
-     156505,
-     156505,
-     177155,
-     177155,
-     218270,
-     218270
+     201051,
+     201051,
+     221611,
+     221611,
+     262705,
+     262705
     ],
     "numberOfCalls": 6,
-    "executionGasAverage": 183977,
+    "executionGasAverage": 228456,
     "calldataGasAverage": 0,
-    "min": 156505,
-    "max": 218270
+    "min": 201051,
+    "max": 262705
    },
    "magicStaker_54264e01": {
     "key": "54264e01",
@@ -1548,21 +1581,27 @@
     "fnSig": "harvest()",
     "intrinsicGas": [
      21064,
+     21064,
+     21064,
      21064
     ],
     "callData": [
      0,
+     0,
+     0,
      0
     ],
     "gasData": [
-     1466073,
-     1466073
+     896481,
+     896481,
+     1610429,
+     1610429
     ],
-    "numberOfCalls": 2,
-    "executionGasAverage": 1466073,
+    "numberOfCalls": 4,
+    "executionGasAverage": 1253455,
     "calldataGasAverage": 0,
-    "min": 1466073,
-    "max": 1466073
+    "min": 896481,
+    "max": 1610429
    },
    "magicStaker_763ad30f": {
     "key": "763ad30f",
@@ -1726,20 +1765,26 @@
     "fnSig": "setStrategyHarvester(address,address,bool)",
     "intrinsicGas": [
      21940,
-     21940
+     21928,
+     21940,
+     21928
     ],
     "callData": [
+     0,
+     0,
      0,
      0
     ],
     "gasData": [
-     85034,
+     85022,
+     85022,
+     146384,
      146384
     ],
-    "numberOfCalls": 2,
-    "executionGasAverage": 115709,
+    "numberOfCalls": 4,
+    "executionGasAverage": 115703,
     "calldataGasAverage": 0,
-    "min": 85034,
+    "min": 85022,
     "max": 146384
    },
    "magicStaker_9958a70e": {
@@ -1749,6 +1794,12 @@
     "method": "setWeights",
     "fnSig": "setWeights(uint112[])",
     "intrinsicGas": [
+     21648,
+     21648,
+     21624,
+     21624,
+     21648,
+     21648,
      21648,
      21648,
      21648,
@@ -1790,9 +1841,17 @@
      0,
      0,
      0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
      0
     ],
     "gasData": [
+     102634,
+     102634,
      121537,
      121537,
      121537,
@@ -1811,14 +1870,18 @@
      121537,
      121537,
      121537,
-     159322,
-     159322
+     121537,
+     121537,
+     121537,
+     126363,
+     159211,
+     159211
     ],
-    "numberOfCalls": 20,
-    "executionGasAverage": 125316,
+    "numberOfCalls": 26,
+    "executionGasAverage": 123167,
     "calldataGasAverage": 0,
-    "min": 121537,
-    "max": 159322
+    "min": 102634,
+    "max": 159211
    },
    "magicStaker_a694fc3a": {
     "key": "a694fc3a",
@@ -1827,6 +1890,8 @@
     "method": "stake",
     "fnSig": "stake(uint256)",
     "intrinsicGas": [
+     21276,
+     21276,
      21288,
      21288,
      21288,
@@ -1844,7 +1909,9 @@
      21288,
      21288,
      21276,
-     21276
+     21276,
+     21288,
+     21288
     ],
     "callData": [
      0,
@@ -1864,33 +1931,41 @@
      0,
      0,
      0,
+     0,
+     0,
+     0,
+     0,
      0
     ],
     "gasData": [
-     268805,
-     268805,
-     268805,
-     268805,
-     268805,
-     268805,
-     268805,
-     268805,
-     268805,
-     268805,
-     268805,
-     268805,
-     273593,
-     273593,
-     285905,
-     285905,
-     471107,
-     471107
+     268694,
+     268694,
+     268694,
+     268694,
+     268694,
+     268694,
+     268694,
+     268694,
+     268694,
+     268694,
+     268694,
+     268694,
+     273482,
+     273482,
+     273494,
+     273494,
+     285794,
+     285794,
+     310482,
+     473429,
+     473429,
+     478217
     ],
-    "numberOfCalls": 18,
-    "executionGasAverage": 293715,
+    "numberOfCalls": 22,
+    "executionGasAverage": 301156,
     "calldataGasAverage": 0,
-    "min": 268805,
-    "max": 471107
+    "min": 268694,
+    "max": 478217
    },
    "magicStaker_d574ea3d": {
     "key": "d574ea3d",
@@ -1951,14 +2026,14 @@
      0
     ],
     "gasData": [
-     147561,
-     147561
+     147450,
+     147450
     ],
     "numberOfCalls": 2,
-    "executionGasAverage": 147561,
+    "executionGasAverage": 147450,
     "calldataGasAverage": 0,
-    "min": 147561,
-    "max": 147561
+    "min": 147450,
+    "max": 147450
    },
    "magicStaker_fbeb4336": {
     "key": "fbeb4336",
@@ -2187,15 +2262,18 @@
     "method": "setMagicStaker",
     "fnSig": "setMagicStaker(address)",
     "intrinsicGas": [
+     21432,
      21432
     ],
     "callData": [
+     0,
      0
     ],
     "gasData": [
+     46052,
      46052
     ],
-    "numberOfCalls": 1,
+    "numberOfCalls": 2,
     "executionGasAverage": 46052,
     "calldataGasAverage": 0,
     "min": 46052,
@@ -2241,15 +2319,15 @@
      87960,
      105060,
      105060,
-     110741,
-     110741,
-     175981
+     110762,
+     110762,
+     176002
     ],
     "numberOfCalls": 7,
-    "executionGasAverage": 111929,
+    "executionGasAverage": 111938,
     "calldataGasAverage": 0,
     "min": 87960,
-    "max": 175981
+    "max": 176002
    },
    "magicVoter_814a1d8e": {
     "key": "814a1d8e",
@@ -2426,18 +2504,18 @@
    {
     "name": "magicHarvester",
     "gasData": [
-     1756989,
-     1756989
+     1804558,
+     1804558
     ],
     "callData": [
      0,
      0
     ],
-    "executionGasAverage": 1756989,
+    "executionGasAverage": 1804558,
     "calldataGasAverage": 0,
-    "min": 1756989,
-    "max": 1756989,
-    "percent": 5.9
+    "min": 1804558,
+    "max": 1804558,
+    "percent": 6
    },
    {
     "name": "magicHarvester.sol:Strategy",
@@ -2447,17 +2525,17 @@
    {
     "name": "magicPounder",
     "gasData": [
-     702983,
-     702983
+     689994,
+     689994
     ],
     "callData": [
      0,
      0
     ],
-    "executionGasAverage": 702983,
+    "executionGasAverage": 689994,
     "calldataGasAverage": 0,
-    "min": 702983,
-    "max": 702983,
+    "min": 689994,
+    "max": 689994,
     "percent": 2.3
    },
    {
@@ -2489,18 +2567,18 @@
    {
     "name": "magicStaker",
     "gasData": [
-     4137239,
-     4137239
+     4165359,
+     4165359
     ],
     "callData": [
      0,
      0
     ],
-    "executionGasAverage": 4137239,
+    "executionGasAverage": 4165359,
     "calldataGasAverage": 0,
-    "min": 4137239,
-    "max": 4137239,
-    "percent": 13.8
+    "min": 4165359,
+    "max": 4165359,
+    "percent": 13.9
    },
    {
     "name": "magicStaker-original-draft.sol:Harvester",
