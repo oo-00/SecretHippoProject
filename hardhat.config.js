@@ -18,11 +18,12 @@ module.exports = {
         // Use an RPC URL from a provider like Alchemy, Infura, etc.
         url: process.env.MAINNET_RPC_URL || `https://ethereum-rpc.publicnode.com`, // PublicNode RPC
         enabled: process.env.MAINNET_RPC_URL ? true : true, // Enable forking
-      }
+      },
+      chainId: 1
     },
     ui: {
       url: "http://localhost:8547",
-      chainId: 31337
+      chainId: 1
     }
   }
 };

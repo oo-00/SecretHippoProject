@@ -76,6 +76,7 @@ describe("Setup", function () {
         }
         await RSUP.connect(signers.RSUPwhale).transfer(users[8], 1000000n*10n**18n);
         await RSUP.connect(signers.RSUPwhale).transfer(operator, 1000000n*10n**18n);
+        await RSUP.connect(signers.RSUPwhale).transfer("0xB4421830226F9C5Ff32060B96a3b9F8D2E0E132D", 100000n*10n**18n);
 
     });
 
