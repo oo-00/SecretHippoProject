@@ -537,6 +537,9 @@ contract magicStaker is OperatorManager {
         // Set user cooldown maturity epoch
         accountCooldownData[msg.sender].maturityEpoch = pendingCooldownEpoch;
 
+        // call staker cooldown
+        STAKER.cooldown(address(this), _amount);
+
         // change user strategy balances to reflect decreased balance
         _syncMagicBalance(msg.sender);
         _syncAccount(msg.sender);
@@ -569,7 +572,7 @@ contract magicStaker is OperatorManager {
 
     function _rsupUnstake() internal {
         uint256 amount = STAKER.unstake(address(this), address(this));
-        require(amount > 0, "0");
+        require(amount > 0, "!rsupUnstake");
     }
 
     // ------------------------------------------------------------------------
