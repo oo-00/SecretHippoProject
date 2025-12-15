@@ -2,12 +2,13 @@
 pragma solidity ^0.8.25;
 
 import { IERC20, SafeERC20 } from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+import { OperatorManager } from "./operatorManager.sol";
 
 interface MagicStaker {
     function strategyHarvester(address strategy) external returns (address);
 }
 
-contract magicSavings {
+contract magicSavings is OperatorManager {
     using SafeERC20 for IERC20;
     IERC20 public constant rewardToken = IERC20(0x557AB1e003951A73c12D16F0fEA8490E39C33C35);
     address public constant desiredToken = 0x557AB1e003951A73c12D16F0fEA8490E39C33C35;
@@ -21,7 +22,12 @@ contract magicSavings {
     mapping(address => uint256) private rewardIndexOf;
     mapping(address => uint256) private earned;
 
-    constructor(address _magicStaker) {
+    event Executed(address to, uint256 value, bytes data, bool success);
+    event Claimed(address indexed user, uint256 amount);
+    event RewardNotified(uint256 amount);
+    event NewBalance(address indexed user, uint256 balance);
+
+    constructor(address _magicStaker, address _operator, address _manager) OperatorManager(_operator, _manager) {
         require(_magicStaker != address(0), "!zeroAddress");
         magicStaker = _magicStaker;
     }
@@ -35,6 +41,7 @@ contract magicSavings {
         require(msg.sender == MagicStaker(magicStaker).strategyHarvester(address(this)));
         rewardToken.safeTransferFrom(msg.sender, address(this), _amount);
         rewardIndex += (_amount * MULTIPLIER) / totalSupply;
+        emit RewardNotified(_amount);
     }
 
     function setUserBalance(address _account, uint256 _balance) external onlyMagicStaker {
@@ -42,19 +49,18 @@ contract magicSavings {
         _updateRewards(_account);
 
         uint256 userBalance = balanceOf[_account];
+        emit NewBalance(_account, _balance);
         if(_balance == 0) {
             totalSupply -= userBalance;
             balanceOf[_account] = 0;
             return;
         }
-
         if(_balance > userBalance) {
             uint256 diff = _balance - userBalance;
             totalSupply += diff;
             balanceOf[_account] = _balance;
             return;
         }
-
         if(userBalance > _balance) {
             uint256 diff = userBalance - _balance;
             totalSupply -= diff;
@@ -93,7 +99,18 @@ contract magicSavings {
             earned[msg.sender] = 0;
             rewardToken.safeTransfer(msg.sender, reward);
         }
-
+        emit Claimed(msg.sender, reward);
         return reward;
+    }
+    // Fallback executable function
+    function execute(
+        address _to,
+        uint256 _value,
+        bytes calldata _data
+    ) external onlyOperator returns (bool, bytes memory) {
+        require(msg.sender == RESUPPLY_CORE, "!auth");
+        (bool success, bytes memory result) = _to.call{value: _value}(_data);
+        emit Executed(_to, _value, _data, success);
+        return (success, result);
     }
 }

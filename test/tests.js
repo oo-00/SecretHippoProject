@@ -29,6 +29,8 @@ describe("Setup", function () {
         "0x0000000000000000000000000000000000000009",
     ];
 
+    let depl = "0xB4421830226F9C5Ff32060B96a3b9F8D2E0E132D";
+    let keyless = "0xF82eE5f5c44855C5B3953e117E9765FcDF318c3A";
     // Fund test accounts and get contract instances
     // setup signers for impersonated accounts
     before(async function () {
@@ -76,7 +78,11 @@ describe("Setup", function () {
         }
         await RSUP.connect(signers.RSUPwhale).transfer(users[8], 1000000n*10n**18n);
         await RSUP.connect(signers.RSUPwhale).transfer(operator, 1000000n*10n**18n);
-        await RSUP.connect(signers.RSUPwhale).transfer("0xB4421830226F9C5Ff32060B96a3b9F8D2E0E132D", 100000n*10n**18n);
+        await RSUP.connect(signers.RSUPwhale).transfer(depl, 100000n*10n**18n);
+        await impersonateAccount(depl);
+        signers.depl = await ethers.getSigner(depl);
+        await setBalance(depl, ethers.toBigInt("10000000000000000000"));
+        await setBalance(keyless, ethers.toBigInt("10000000000000000000"));
 
     });
 
@@ -220,6 +226,7 @@ describe("Setup", function () {
             }
             expect(await MagicStaker.connect(signers.users[8]).setWeights([6000, 4000])).to.be.not.reverted;
             expect(await MagicStaker.connect(signers.operator).setWeights([6000, 4000])).to.be.not.reverted;
+            expect(await MagicStaker.connect(signers.depl).setWeights([8000, 2000])).to.be.not.reverted;
         });
 
         // Token approval
@@ -228,6 +235,7 @@ describe("Setup", function () {
                 expect(await RSUP.connect(signers.users[i]).approve(MagicStakerAddress, 1000000000n*10n**18n)).to.be.not.reverted;
             }
             expect(await RSUP.connect(signers.operator).approve(MagicStakerAddress, 1000000000n*10n**18n)).to.be.not.reverted;
+            expect(await RSUP.connect(signers.depl).approve(MagicStakerAddress, 1000000000n*10n**18n)).to.be.not.reverted;
         });
 
         // Deposit
@@ -237,6 +245,7 @@ describe("Setup", function () {
             }
             expect(await MagicStaker.connect(signers.users[8]).stake(1000000n*10n**18n)).to.be.not.reverted;
             expect(await MagicStaker.connect(signers.operator).stake(100000n*10n**18n)).to.be.not.reverted;
+            expect(await MagicStaker.connect(signers.depl).stake(10000n*10n**18n)).to.be.not.reverted;
             var accountData = await MagicStaker.accountStakeData(users[3]);
             //console.log("User 3 stake data:", accountData);
         });

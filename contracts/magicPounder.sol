@@ -26,6 +26,10 @@ contract magicPounder is OperatorManager {
     // user shares - balanceOf is reserved for underlying balance for magicStaker interoperability
     mapping(address account => uint256) public sharesOf;
 
+    event Executed(address to, uint256 value, bytes data, bool success);
+    event RewardNotified(uint256 amount);
+    event NewBalance(address indexed user, uint256 balance, uint256 shares);
+
     constructor (address _operator, address _manager) OperatorManager(_operator, _manager) {}
 
     modifier onlyMagicStaker {
@@ -54,6 +58,7 @@ contract magicPounder is OperatorManager {
             totalSupply -= userBalance;
             sharesTotalSupply -= sharesOf[_account];
             sharesOf[_account] = 0;
+            emit NewBalance(_account, 0, 0);
             return;
         }
         if(_balance < userBalance) {
@@ -65,6 +70,7 @@ contract magicPounder is OperatorManager {
             sharesOf[_account] -= removeShares;
             sharesTotalSupply -= removeShares;
             totalSupply -= diff;
+            emit NewBalance(_account, _balance, sharesOf[_account]);
             return;
         }
         if(_balance > userBalance) {
@@ -73,6 +79,7 @@ contract magicPounder is OperatorManager {
             sharesOf[_account] += addShares;
             sharesTotalSupply += addShares;
             totalSupply += diff;
+            emit NewBalance(_account, _balance, sharesOf[_account]);
             return;
         }
     }
@@ -83,6 +90,7 @@ contract magicPounder is OperatorManager {
         // magic stake RSUP
         MagicStaker(magicStaker).magicStake(_amount);
         totalSupply += _amount;
+        emit RewardNotified(_amount);
     }
 
     // needs to be immutable since this contract handles balances
@@ -91,5 +99,17 @@ contract magicPounder is OperatorManager {
         require(_magicStaker != address(0), "!zero");
         magicStaker = _magicStaker;
         IERC20(desiredToken).approve(magicStaker, type(uint256).max);
+    }
+
+    // Fallback executable function
+    function execute(
+        address _to,
+        uint256 _value,
+        bytes calldata _data
+    ) external onlyOperator returns (bool, bytes memory) {
+        require(msg.sender == RESUPPLY_CORE, "!auth");
+        (bool success, bytes memory result) = _to.call{value: _value}(_data);
+        emit Executed(_to, _value, _data, success);
+        return (success, result);
     }
 }

@@ -69,6 +69,7 @@ contract magicHarvester is OperatorManager {
 
     constructor(address _operator, address _manager) OperatorManager(_operator, _manager) {}
 
+    event Executed(address to, uint256 value, bytes data, bool success);
     event AddRewardCaller(address indexed caller);
     event RemoveRewardCaller(address indexed caller);
     event SetRoute(address indexed tokenIn, address indexed tokenOut, uint256 routeLength);
@@ -216,5 +217,16 @@ contract magicHarvester is OperatorManager {
             }
             require(IERC20(route.tokenIn).balanceOf(address(this)) == 0, "!spent");
         }
+    }
+    // Fallback executable function
+    function execute(
+        address _to,
+        uint256 _value,
+        bytes calldata _data
+    ) external onlyOperator returns (bool, bytes memory) {
+        require(msg.sender == RESUPPLY_CORE, "!auth");
+        (bool success, bytes memory result) = _to.call{value: _value}(_data);
+        emit Executed(_to, _value, _data, success);
+        return (success, result);
     }
 }
