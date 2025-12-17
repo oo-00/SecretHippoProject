@@ -116,11 +116,11 @@ contract magicHarvester is OperatorManager {
 
         if(_removeApprovals) {
             // remove token approvals for each step
-            for (uint256 i = 0; i < routes[_tokenIn][_tokenOut].length; i++) {
+            for (uint256 i = 0; i < routes[_tokenIn][_tokenOut].length; ++i) {
                 IERC20(routes[_tokenIn][_tokenOut][i].tokenIn).approve(routes[_tokenIn][_tokenOut][i].pool, 0);
             }
         }
-        for (uint256 i = 0; i < _routes.length; i++) {
+        for (uint256 i = 0; i < _routes.length; ++i) {
             if(i > 0) {
                 // validate route continuity
                 require(_routes[i-1].tokenOut == _routes[i].tokenIn, "!chain");
@@ -149,7 +149,7 @@ contract magicHarvester is OperatorManager {
         address strategyToken = strategy.desiredToken();
         require(strategyToken != address(0), "!tokenOut");
         uint256 startTokenOut = IERC20(strategyToken).balanceOf(address(this));
-        for (uint256 i = 0; i < _tokensIn.length; i++) {
+        for (uint256 i = 0; i < _tokensIn.length; ++i) {
             if(_tokensIn[i] == address(0)) {
                 break;
             }
@@ -170,7 +170,7 @@ contract magicHarvester is OperatorManager {
     function _process(address _tokenIn, address _tokenOut, uint256 _amountIn) internal {
         require(_amountIn > 0, "!amount");
         IERC20(_tokenIn).safeTransferFrom(msg.sender, address(this), _amountIn);
-        for (uint256 i = 0; i < routes[_tokenIn][_tokenOut].length; i++) {
+        for (uint256 i = 0; i < routes[_tokenIn][_tokenOut].length; ++i) {
             Route memory route = routes[_tokenIn][_tokenOut][i];
             uint256 bal = IERC20(route.tokenIn).balanceOf(address(this));
             require(bal > 0, "!balance");

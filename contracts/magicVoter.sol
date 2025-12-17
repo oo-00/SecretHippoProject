@@ -6,7 +6,7 @@
     You should personally audit and test this code before using it.
 */
 
-pragma solidity ^0.8.25;
+pragma solidity ^0.8.30;
 
 import { OperatorManager } from "./operatorManager.sol";
 
@@ -16,14 +16,14 @@ interface Voter {
         uint40 weightNo;
     }
     
-    function proposalData(uint256 id) external returns (
+    function proposalData(uint256 id) external view returns (
         uint16 epoch,
         uint32 createdAt,
         uint40 quorumWeight,
         bool processed,
         Vote memory results
     );
-    function votingPeriod() external returns(uint256);
+    function votingPeriod() external view returns(uint256);
 }
 
 interface MagicStaker {
@@ -47,20 +47,21 @@ contract magicVoter is OperatorManager {
     mapping(uint256 => VoteData) public voteTotals; // proposalId => VoteData
     mapping(uint256 => bool) public executed; // proposalId => executed
 
+    event Executed(address to, uint256 value, bytes data, bool success);
+    event VoteCast(address indexed voter, uint256 indexed proposalId, uint256 weightYes, uint256 weightNo);
+    event VoteCommitted(uint256 indexed proposalId);
+    event NewExecutionDelay(uint256 time);
+    event NewMagicStaker(address magicStaker);
+    event NewResupplyVoter(address resupplyVoter);
+
     constructor(address _operator, address _manager) OperatorManager(_operator, _manager) {}
 
 
-    function canVote(uint256 id) public returns(bool _canVote, uint32 _createdAt) {
+    function canVote(uint256 id) public view returns(bool _canVote, uint32 _createdAt) {
 
         require(!executed[id], "Executed");
 
-        (   uint16 epoch,
-            uint32 createdAt,
-            uint40 quorumWeight,
-            bool processed,
-            Voter.Vote memory results ) = voter.proposalData(id);
-
-        epoch; quorumWeight; results; // IDE suppressor, should be removed from production
+        (,uint32 createdAt,,bool processed,) = voter.proposalData(id);
 
         uint256 period = voter.votingPeriod();
         _createdAt = createdAt;
@@ -94,16 +95,18 @@ contract magicVoter is OperatorManager {
         VoteData storage totals = voteTotals[id];
         totals.yes += weightYes;
         totals.no += weightNo;
-
+        emit VoteCast(msg.sender, id, weightYes, weightNo);
         // if voting delay period over, cast vote automatically
         if(_createdAt + executionDelay < block.timestamp) {
             try magicStaker.castVote(id, totals.yes, totals.no) {
                 // Vote cast
                 executed[id] = true;
+                emit VoteCommitted(id);
             } catch {
                 // May fail if quorum not met. This is okay. Leave open for other voters.
             }
         }
+
     }
 
     function commitVote(uint256 id) external {
@@ -113,11 +116,14 @@ contract magicVoter is OperatorManager {
         VoteData storage totals = voteTotals[id];
         magicStaker.castVote(id, totals.yes, totals.no);
         executed[id] = true;
+        emit VoteCommitted(id);
     }
 
     // doesn't need to be immutable since this contract does not handle balances
     function setMagicStaker(address _magicStaker) external onlyOperator {
+        require(_magicStaker != address(0), "!zero");
         magicStaker = MagicStaker(_magicStaker);
+        emit NewMagicStaker(_magicStaker);
     }
 
     function setExecutionDelay(uint256 _time) external onlyOperator {
@@ -125,10 +131,12 @@ contract magicVoter is OperatorManager {
         require(_time < votingPeriod, "!tooLong");
         require(_time > 60*60*24*2, "!tooShort");
         executionDelay = _time;
+        emit NewExecutionDelay(_time);
     }
 
     function setResupplyVoter(address _voter) external {
         require(msg.sender == address(magicStaker), "!auth");
         voter = Voter(_voter);
+        emit NewResupplyVoter(_voter);
     }
 }

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Open Source
 
-pragma solidity ^0.8.25;
+pragma solidity ^0.8.30;
 
 contract OperatorManager {
     address public constant RESUPPLY_CORE = 0xc07e000044F95655c11fda4cD37F70A94d7e0a7d;
