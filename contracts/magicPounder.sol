@@ -45,7 +45,7 @@ contract magicPounder is OperatorManager {
     }
     
     function underlyingToShares(uint256 _amount) public view returns (uint256) {
-        if(sharesTotalSupply == 0) {
+        if(sharesTotalSupply == 0 || totalSupply == 0) {
             return _amount;
         }
         return (_amount * sharesTotalSupply) / totalSupply;
@@ -61,27 +61,23 @@ contract magicPounder is OperatorManager {
             emit NewBalance(_account, 0, 0);
             return;
         }
-        if(_balance < userBalance) {
-            uint256 diff = userBalance - _balance;
-            uint256 removeShares = underlyingToShares(diff);
-            if(removeShares > sharesOf[_account]) {
-                removeShares = sharesOf[_account];
+        uint256 oldShares = sharesOf[_account];
+        if(_balance != userBalance) {
+            uint256 newShares = underlyingToShares(_balance);
+            if(newShares < oldShares) {
+                sharesTotalSupply -= oldShares - newShares;
+            } else {
+                sharesTotalSupply += newShares - oldShares;
             }
-            sharesOf[_account] -= removeShares;
-            sharesTotalSupply -= removeShares;
-            totalSupply -= diff;
-            emit NewBalance(_account, _balance, sharesOf[_account]);
-            return;
+            sharesOf[_account] = newShares;
+            totalSupply = totalSupply - userBalance + _balance;
+            emit NewBalance(_account, _balance, newShares);
+        } else {
+            emit NewBalance(_account, _balance, oldShares);
         }
-        if(_balance > userBalance) {
-            uint256 diff = _balance - userBalance;
-            uint256 addShares = underlyingToShares(diff);
-            sharesOf[_account] += addShares;
-            sharesTotalSupply += addShares;
-            totalSupply += diff;
-            emit NewBalance(_account, _balance, sharesOf[_account]);
-            return;
-        }
+        assert(sharesOf[_account] <= sharesTotalSupply);
+        assert(totalSupply > 0);
+        assert(sharesTotalSupply > 0);
     }
 
     function notifyReward(uint256 _amount) external {
