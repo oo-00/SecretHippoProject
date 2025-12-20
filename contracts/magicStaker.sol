@@ -233,7 +233,7 @@ contract magicStaker is OperatorManager {
         @dev Prefer to use this function over it's view counterpart for
              contract -> contract interactions.
     */
-    function checkpointAccount(address _account) external returns (AccountStakeData memory acctData, uint weight) {
+    function checkpointAccount(address _account) public returns (AccountStakeData memory acctData, uint weight) {
         (acctData, weight) = _checkpointAccount(_account, getEpoch());
         accountStakeData[_account] = acctData;
     }
@@ -356,6 +356,7 @@ contract magicStaker is OperatorManager {
      */
     function syncAccount() external {
         require(unclaimedMagicTokens(msg.sender) > 0, "0");
+        checkpointAccount(msg.sender);
         // claim any magic pounder share difference
         _syncMagicBalance(msg.sender);
         // change user strategy balances to reflect any yield
