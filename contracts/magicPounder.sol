@@ -1,11 +1,6 @@
 // SPDX-License-Identifier: Open Source
 
-/*
-    This is not audited. 
-    This is not tested. 
-    You should personally audit and test this code before using it.
-
-*/ 
+//  You should personally audit and test this code before using it.
 
 pragma solidity ^0.8.30;
 
