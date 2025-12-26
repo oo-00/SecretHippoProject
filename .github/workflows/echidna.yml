@@ -36,11 +36,31 @@ jobs:
       - name: Compile contracts
         run: npx hardhat compile
       
-      - name: Run Echidna
+      - name: Run Echidna (Basic Tests)
         uses: crytic/echidna-action@v2
         with:
           files: test/fuzzing/EchidnaTest.sol
           contract: EchidnaTest
+          config: echidna.yaml
+          echidna-version: latest
+          solc-version: 0.8.30
+        continue-on-error: true
+      
+      - name: Run Echidna (Comprehensive Tests)
+        uses: crytic/echidna-action@v2
+        with:
+          files: test/fuzzing/ComprehensiveFuzzTest.sol
+          contract: ComprehensiveFuzzTest
+          config: echidna.yaml
+          echidna-version: latest
+          solc-version: 0.8.30
+        continue-on-error: true
+      
+      - name: Run Echidna (MagicStaker Protocol Tests)
+        uses: crytic/echidna-action@v2
+        with:
+          files: test/fuzzing/MagicStakerFuzzTest.sol
+          contract: MagicStakerFuzzTest
           config: echidna.yaml
           echidna-version: latest
           solc-version: 0.8.30

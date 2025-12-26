@@ -19,6 +19,25 @@ coverage: true
 # Timeout for each test (in seconds)
 timeout: 300
 
+# Multiple sender addresses for multi-actor fuzzing
+sender: ["0x10000", "0x20000", "0x30000", "0x40000"]
+
+# Allow contract deployment and creation
+deployer: "0x10000"
+
+# Corpus collection for reusing interesting sequences
+corpusDir: "echidna-corpus"
+
+# Coverage report format
+format: text
+
+# Filter settings
+filterBlacklist: true
+filterFunctions: []
+
+# Shrink failing sequences to minimal reproducible case
+shrinkLimit: 5000
+
 # Crytic compile arguments for node_modules resolution
 cryticArgs:
   - --compile-remove-metadata
