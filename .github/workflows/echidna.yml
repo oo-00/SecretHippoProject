@@ -1,0 +1,57 @@
+name: Echidna Fuzzing
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  fuzzing:
+    runs-on: ubuntu-latest
+    name: Run Echidna Fuzzer
+    permissions:
+      contents: read
+      actions: read
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Compile contracts
+        run: npx hardhat compile
+      
+      - name: Run Echidna
+        uses: crytic/echidna-action@v2
+        with:
+          files: test/fuzzing/EchidnaTest.sol
+          contract: EchidnaTest
+          config: echidna.yaml
+          echidna-version: latest
+          solc-version: 0.8.30
+        continue-on-error: true
+      
+      - name: Upload Echidna results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: echidna-results
+          path: |
+            echidna-corpus/
+            *.txt
+          retention-days: 30

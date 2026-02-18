@@ -1,0 +1,26 @@
+# Echidna Configuration File
+# https://github.com/crytic/echidna
+
+# Test mode: assertion-based testing
+testMode: assertion
+
+# Number of transaction sequences to generate
+testLimit: 50000
+
+# Maximum number of transactions per sequence
+seqLen: 100
+
+# Directory to save crash sequences and corpus
+corpusDir: "echidna-corpus"
+
+# Enable coverage tracking
+coverage: true
+
+# Timeout for each test (in seconds)
+timeout: 300
+
+# Crytic compile arguments for node_modules resolution
+cryticArgs:
+  - --compile-remove-metadata
+  - --solc-remaps
+  - "@openzeppelin=node_modules/@openzeppelin"

@@ -1,0 +1,2013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Audit: hippofinal</title>
+    
+    <!-- Prism.js for syntax highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-solidity.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-rust.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-go.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.7;
+            color: #e8ecf1;
+            background: linear-gradient(135deg, #0f1419 0%, #1a1f2e 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 60px 40px;
+        }
+        
+        .header {
+            text-align: center;
+            padding: 80px 40px;
+            margin: -60px -40px 60px;
+            background: linear-gradient(180deg, rgba(15,20,25,0.95) 0%, rgba(26,31,46,0.9) 100%);
+            border-bottom: 1px solid rgba(136,146,176,0.15);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at center, rgba(100,181,246,0.03) 0%, transparent 50%);
+            animation: pulse 20s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.3; }
+        }
+        
+        .logo {
+            width: 140px;
+            height: 140px;
+            margin: 0 auto 35px;
+            position: relative;
+            z-index: 1;
+            background: linear-gradient(135deg, rgba(30,40,55,0.8) 0%, rgba(20,25,35,0.9) 100%);
+            border-radius: 24px;
+            padding: 15px;
+            border: 2px solid rgba(100,181,246,0.2);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5),
+                        0 0 60px rgba(100,181,246,0.2),
+                        inset 0 0 30px rgba(100,181,246,0.05);
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5)) 
+                    drop-shadow(0 0 20px rgba(100,181,246,0.4));
+        }
+        
+        h1 {
+            font-size: 42px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            color: #ffffff;
+            letter-spacing: -0.5px;
+            position: relative;
+            z-index: 1;
+            text-shadow: 0 2px 20px rgba(0,0,0,0.5);
+        }
+        
+        .subtitle {
+            font-size: 20px;
+            color: #64b5f6;
+            margin-bottom: 25px;
+            font-weight: 500;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .report-meta {
+            font-size: 15px;
+            color: #8892a0;
+            position: relative;
+            z-index: 1;
+            line-height: 1.8;
+        }
+        
+        .report-meta strong {
+            color: #b4bcc8;
+            font-weight: 600;
+        }
+        
+        .section {
+            margin-bottom: 60px;
+            animation: fadeInUp 0.8s ease-out;
+            position: relative;
+        }
+        
+        .section::before {
+            content: '';
+            position: absolute;
+            left: -40px;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(180deg, transparent, #64b5f6, transparent);
+            opacity: 0.3;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        h2 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 30px;
+            color: #ffffff;
+            padding-bottom: 15px;
+            border-bottom: 2px solid transparent;
+            background: linear-gradient(90deg, #64b5f6 0%, transparent 50%) bottom left no-repeat;
+            background-size: 100% 2px;
+            letter-spacing: -0.3px;
+            position: relative;
+        }
+        
+        h2::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #64b5f6, #42a5f5);
+            animation: expandWidth 1.5s ease-out forwards;
+        }
+        
+        @keyframes expandWidth {
+            to { width: 100%; }
+        }
+        
+        h3 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 18px;
+            color: #81c7f7;
+            letter-spacing: -0.2px;
+        }
+        
+        p {
+            margin-bottom: 18px;
+            text-align: left;
+            color: #c8d0db;
+            line-height: 1.8;
+        }
+        
+        .finding {
+            background: linear-gradient(135deg, rgba(36,52,71,0.6) 0%, rgba(26,35,50,0.6) 100%);
+            border-left: 4px solid #dc3545;
+            padding: 25px;
+            margin-bottom: 25px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3),
+                        inset 0 1px 0 rgba(255,255,255,0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .code-sample {
+            background: #1a1a2e;
+            border: 1px solid #16213e;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+        
+        .code-sample pre {
+            margin: 0;
+            background: transparent;
+            border: none;
+            padding: 0;
+        }
+        
+        .code-sample pre code {
+            background: transparent !important;
+            padding: 0 !important;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #2a3f5f;
+        }
+        
+        .code-file {
+            color: #64b5f6;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .code-lines {
+            color: #888;
+            font-size: 11px;
+        }
+        
+        .code-explanation {
+            background: rgba(100, 181, 246, 0.1);
+            border-left: 3px solid #64b5f6;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 13px;
+            color: #b3d4fc;
+            font-style: italic;
+        }
+        /* Enhanced code layout: gutter + content + copy */
+        .code-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            column-gap: 12px;
+        }
+        .code-gutter {
+            color: #6b7b94;
+            text-align: right;
+            user-select: none;
+            padding-right: 8px;
+            border-right: 1px solid #2a3f5f;
+        }
+        .code-gutter pre { color: inherit; margin: 0; }
+        .code-content { overflow-x: auto; }
+        .code-content pre { white-space: pre; margin: 0; }
+        .code-line { white-space: pre; }
+        .code-header-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .copy-btn {
+            background: rgba(100,181,246,0.12);
+            border: 1px solid rgba(100,181,246,0.35);
+            color: #b3d4fc;
+            font-size: 11px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .copy-btn:hover { background: rgba(100,181,246,0.2); }
+        
+        .finding::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(100,181,246,0.5), transparent);
+            animation: scan 3s linear infinite;
+        }
+        
+        @keyframes scan {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .finding:hover {
+            transform: translateY(-3px) scale(1.01);
+            box-shadow: 0 8px 40px rgba(0,0,0,0.5),
+                        inset 0 1px 0 rgba(255,255,255,0.2);
+            background: linear-gradient(135deg, rgba(36,52,71,0.7) 0%, rgba(26,35,50,0.7) 100%);
+        }
+        
+        .finding.critical {
+            border-left-color: #dc3545;
+        }
+        
+        .finding.high {
+            border-left-color: #fd7e14;
+        }
+        
+        .finding.medium {
+            border-left-color: #ffc107;
+        }
+        
+        .finding.low {
+            border-left-color: #28a745;
+        }
+        
+        .severity-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            letter-spacing: 1px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .severity-badge::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent);
+            transform: rotate(45deg);
+            animation: shimmer 3s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+        
+        .severity-critical {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .severity-high {
+            background: #fd7e14;
+            color: white;
+        }
+        
+        .severity-medium {
+            background: #ffc107;
+            color: #333;
+        }
+        
+        .severity-low {
+            background: #28a745;
+            color: white;
+        }
+        
+        .test-item {
+            padding: 10px 0;
+            border-bottom: 1px solid #3a4556;
+        }
+        
+        .test-item:last-child {
+            border-bottom: none;
+        }
+        
+        .test-status {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+            vertical-align: middle;
+            box-shadow: 0 0 10px currentColor;
+            animation: pulse-dot 2s infinite;
+        }
+        
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(0.9); }
+        }
+        
+        .status-confirmed {
+            background: #dc3545;
+        }
+        
+        .status-rejected {
+            background: #28a745;
+        }
+        
+        .status-investigating {
+            background: #ffc107;
+        }
+        
+        .status-proposed {
+            background: #6c757d;
+        }
+        
+        .footer {
+            margin-top: 80px;
+            padding-top: 40px;
+            border-top: 1px solid rgba(136,146,176,0.15);
+            text-align: center;
+            color: #64738c;
+            font-size: 14px;
+        }
+        
+        .footer p {
+            text-align: center;
+            color: #64738c;
+        }
+        
+        /* Proof of Concept Styles */
+        .poc-section {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, rgba(26,31,46,0.7) 0%, rgba(15,20,25,0.8) 100%);
+            border-radius: 12px;
+            border: 1px solid rgba(100,181,246,0.2);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3),
+                        inset 0 1px 0 rgba(255,255,255,0.05);
+        }
+        
+        .poc-section h4 {
+            color: #64b5f6;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .poc-file {
+            margin-bottom: 1.5rem;
+            background: rgba(20,25,35,0.5);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid rgba(100,181,246,0.1);
+        }
+        
+        .poc-file h5 {
+            color: #90caf9;
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            font-size: 0.95rem;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .poc-description {
+            color: #8892a9;
+            font-style: italic;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .poc-file pre {
+            background: rgba(10,12,18,0.7);
+            border: 1px solid rgba(100,181,246,0.1);
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 0;
+        }
+        
+        .poc-file code {
+            color: #e0e0e0;
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        
+        /* Statistics Section Styles */
+        .stats-section {
+            margin: 60px 0;
+            padding: 40px;
+            background: linear-gradient(135deg, rgba(26,31,46,0.8) 0%, rgba(15,20,25,0.9) 100%);
+            border-radius: 20px;
+            border: 1px solid rgba(100,181,246,0.2);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4),
+                        inset 0 1px 0 rgba(255,255,255,0.05);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stats-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at center, rgba(100,181,246,0.05) 0%, transparent 50%);
+            animation: rotate 30s linear infinite;
+        }
+        
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, rgba(36,52,71,0.7) 0%, rgba(26,35,50,0.7) 100%);
+            border-radius: 16px;
+            padding: 25px;
+            text-align: center;
+            border: 1px solid rgba(100,181,246,0.15);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3),
+                        inset 0 1px 0 rgba(255,255,255,0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.5),
+                        inset 0 1px 0 rgba(255,255,255,0.2);
+            border-color: rgba(100,181,246,0.3);
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, transparent, rgba(100,181,246,0.4), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+            border-radius: 16px;
+        }
+        
+        .stat-card:hover::before {
+            opacity: 1;
+            animation: shimmer-stat 1.5s;
+        }
+        
+        @keyframes shimmer-stat {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .stat-number {
+            font-size: 48px;
+            font-weight: 800;
+            margin: 10px 0;
+            background: linear-gradient(135deg, #64b5f6 0%, #42a5f5 50%, #81c7f7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(100,181,246,0.5);
+            animation: pulse-number 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse-number {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .stat-number.critical {
+            background: linear-gradient(135deg, #ff6b6b 0%, #dc3545 50%, #ff8787 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(220,53,69,0.5);
+        }
+        
+        .stat-number.high {
+            background: linear-gradient(135deg, #ffb347 0%, #fd7e14 50%, #ffc371 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(253,126,20,0.5);
+        }
+        
+        .stat-number.medium {
+            background: linear-gradient(135deg, #ffd93d 0%, #ffc107 50%, #ffe066 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(255,193,7,0.5);
+        }
+        
+        .stat-number.low {
+            background: linear-gradient(135deg, #6bcf7e 0%, #28a745 50%, #52d869 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(40,167,69,0.5);
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #8892b0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+        
+        .chart-container {
+            position: relative;
+            z-index: 1;
+            margin-top: 30px;
+        }
+        
+        .chart-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+        
+        .pie-chart {
+            position: relative;
+            width: 250px;
+            height: 250px;
+        }
+        
+        .pie-chart svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 4px 20px rgba(0,0,0,0.3));
+        }
+        
+        .chart-legend {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-width: 200px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px;
+            background: rgba(26,31,46,0.4);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .legend-item:hover {
+            background: rgba(36,52,71,0.6);
+            transform: translateX(5px);
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        
+        .legend-text {
+            flex: 1;
+            color: #c8d0db;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .legend-count {
+            font-weight: 700;
+            color: #64b5f6;
+            font-size: 16px;
+        }
+        
+        .summary-title {
+            text-align: center;
+            font-size: 24px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 30px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .summary-title::after {
+            content: '';
+            display: block;
+            width: 100px;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #64b5f6, transparent);
+            margin: 15px auto 0;
+        }
+        
+        ul {
+            margin: 20px 0;
+            padding-left: 25px;
+        }
+        
+        ul li {
+            margin-bottom: 12px;
+            color: #c8d0db;
+            line-height: 1.8;
+        }
+        
+        ul li::marker {
+            color: #64b5f6;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3),
+                        inset 0 1px 0 rgba(255,255,255,0.05);
+            background: rgba(26,35,50,0.3);
+        }
+        
+        th, td {
+            padding: 16px;
+            text-align: left;
+        }
+        
+        th {
+            background: linear-gradient(135deg, rgba(36,52,71,0.8) 0%, rgba(26,35,50,0.8) 100%);
+            font-weight: 600;
+            color: #64b5f6;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 1px;
+        }
+        
+        td {
+            background: rgba(26,35,50,0.4);
+            border-bottom: 1px solid rgba(58,69,86,0.3);
+            color: #c8d0db;
+        }
+        
+        tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .component-diagram {
+            margin-top: 40px;
+            padding: 30px;
+            background: linear-gradient(135deg, rgba(36,52,71,0.4) 0%, rgba(26,35,50,0.4) 100%);
+            border-radius: 12px;
+            border: 1px solid rgba(100,181,246,0.2);
+        }
+        
+        .component-diagram h3 {
+            color: #81c7f7;
+            margin-bottom: 20px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .diagram-content {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #e8ecf1;
+            background: rgba(15,20,25,0.6);
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            white-space: pre;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>SECURITY AUDIT REPORT</h1>
+            <div class="subtitle">Hippofinal</div>
+            <div class="report-meta">
+                <strong>Project:</strong> hippofinal<br>
+                <strong>Date:</strong> December 12, 2025<br>
+                <strong>Audit Team:</strong> Gemach Security<br>
+                <strong>Head of Audit:</strong> Assune<br>
+                <strong>AI Researcher:</strong> Dr. Talia Ben-David<br>
+                <strong>Lead Auditors:</strong> Satoshi Sniffer, Vitalik Validator, Ledger Lark
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>Executive Summary</h2>
+            <p>The Hound security team conducted this comprehensive audit of the Hippofinal protocol, focusing on assessing key vulnerabilities and ensuring robust security practices.</p>
+<p>Our team reviewed vital aspects such as authorization mapping, asset flow, DeFi swap routing, governance flow, and the overall system architecture. Each component was evaluated for security risks and operational efficiency.</p>
+<p>The audit revealed several high-severity vulnerabilities, many of which were related to governance manipulation, reentrancy risks, and token handling issues. Despite this, we found areas that demonstrated strong security posture, indicating a mature system architecture with room for improvements.</p>
+            
+            <h3 style="margin-top: 30px; color: #64b5f6;">Audit Team</h3>
+            
+            <table style="width: 100%; margin: 20px 0; border-collapse: collapse; background: rgba(26,31,46,0.4); border: 1px solid rgba(136,146,176,0.2); border-radius: 8px; overflow: hidden;">
+                <thead>
+                    <tr style="background: rgba(100,181,246,0.1); border-bottom: 1px solid rgba(136,146,176,0.2);">
+                        <th style="padding: 12px 16px; text-align: left; color: #64b5f6; font-weight: 600;">Audit Role</th>
+                        <th style="padding: 12px 16px; text-align: left; color: #64b5f6; font-weight: 600;">Assigned To</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="border-bottom: 1px solid rgba(136,146,176,0.1);">
+                        <td style="padding: 12px 16px; color: #8892b0;">Head of Audit</td>
+                        <td style="padding: 12px 16px; color: #e8ecf1;">Assune</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid rgba(136,146,176,0.1);">
+                        <td style="padding: 12px 16px; color: #8892b0;">AI Researcher</td>
+                        <td style="padding: 12px 16px; color: #e8ecf1;">Dr. Talia Ben-David</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid rgba(136,146,176,0.1);">
+                        <td style="padding: 12px 16px; color: #8892b0;">Junior Auditors</td>
+                        <td style="padding: 12px 16px; color: #e8ecf1;">Satoshi Sniffer</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px 16px; color: #8892b0;">Senior Auditor</td>
+                        <td style="padding: 12px 16px; color: #e8ecf1;">Vitalik Validator</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid rgba(136,146,176,0.1);">
+                        <td style="padding: 12px 16px; color: #8892b0;">Quality Assurance</td>
+                        <td style="padding: 12px 16px; color: #e8ecf1;">Hodl Honeybadger</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px 16px; color: #8892b0;">Report Writing</td>
+                        <td style="padding: 12px 16px; color: #e8ecf1;">Ledger Lark</td>
+                    </tr>
+                </tbody>
+            </table>
+        
+        </div>
+        
+        <div class="section">
+            <h2>System Overview</h2>
+            <p>The Hound team analyzed the Hippofinal protocol's architecture, which comprises smart contracts like magicStaker, magicVoter, magicHarvester, and strategies like magicPounder. These contracts coordinate to facilitate staking, reward harvesting, and voting mechanisms, essential to the protocol's decentralized governance and incentive distribution.</p>
+<p>Our analysis revealed that magicStaker acts as a central contract, connecting various strategies and external systems. It interacts with external contracts, such as Staker and Registry, while managing token approvals and reward distributions through a composite flow of asset transfers and governance checks.</p>
+<p>The magicHarvester contract is integral to the protocol's financial operations, managing the processing and allocation of harvested rewards. We discovered potential vulnerabilities here, particularly regarding token handling and route configurations, which could expose the protocol to unwanted asset losses or manipulation.</p>
+<p>The governance flow relies heavily on the magicVoter contract, which our team evaluated for risks associated with vote manipulation and quorum inflation. By assessing the intricacies of the governance processes, we identified potential areas for stability improvements and enhanced security measures.</p>
+<p>Throughout the audit, we discovered points where token handling could lead to issues under specific conditions, suggesting a need for stricter security measures and contract updates to mitigate identified risks. Our evaluation leveraged the expertise of GPT-5 Mini as junior auditors and GPT-5 for oversight, ensuring thorough analysis and validation of potential threats.</p>
+        </div>
+        
+        
+        <div class="stats-section">
+            <h2 class="summary-title">Security Analysis Statistics</h2>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number">9</div>
+                    <div class="stat-label">Total Findings</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-number critical">0</div>
+                    <div class="stat-label">Critical Issues</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-number high">7</div>
+                    <div class="stat-label">High Severity</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-number medium">2</div>
+                    <div class="stat-label">Medium Severity</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-number low">0</div>
+                    <div class="stat-label">Low Severity</div>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <h3 style="text-align: center; color: #81c7f7; margin-bottom: 30px; font-size: 20px;">Severity Distribution</h3>
+                <div class="chart-wrapper">
+                    <div class="pie-chart">
+                        
+        <svg viewBox="0 0 250 250" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <filter id="glow">
+                    <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                    <feMerge>
+                        <feMergeNode in="coloredBlur"/>
+                        <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                </filter>
+            </defs>
+            <g filter="url(#glow)">
+                
+                <path d="M125,125 L125.00,25.00 A100,100 0 1,1 26.52,107.64 Z" 
+                      fill="#fd7e14" 
+                      stroke="rgba(255,255,255,0.1)" 
+                      stroke-width="2"
+                      opacity="0.9">
+                    <animate attributeName="opacity" 
+                             values="0.9;1;0.9" 
+                             dur="3s" 
+                             repeatCount="indefinite"/>
+                </path>
+            
+                <path d="M125,125 L26.52,107.64 A100,100 0 0,1 125.00,25.00 Z" 
+                      fill="#ffc107" 
+                      stroke="rgba(255,255,255,0.1)" 
+                      stroke-width="2"
+                      opacity="0.9">
+                    <animate attributeName="opacity" 
+                             values="0.9;1;0.9" 
+                             dur="3s" 
+                             repeatCount="indefinite"/>
+                </path>
+            
+            </g>
+            <circle cx="125" cy="125" r="60" 
+                    fill="rgba(15,20,25,0.8)" 
+                    stroke="rgba(100,181,246,0.3)" 
+                    stroke-width="2"/>
+            <text x="125" y="125" 
+                  text-anchor="middle" 
+                  dominant-baseline="middle" 
+                  font-size="32" 
+                  font-weight="700" 
+                  fill="#64b5f6">9</text>
+            <text x="125" y="145" 
+                  text-anchor="middle" 
+                  dominant-baseline="middle" 
+                  font-size="12" 
+                  font-weight="600" 
+                  fill="#8892b0" 
+                  text-transform="uppercase" 
+                  letter-spacing="1">Issues</text>
+        </svg>
+        
+                    </div>
+                    <div class="chart-legend">
+                        
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #fd7e14;"></div>
+                    <div class="legend-text">High</div>
+                    <div class="legend-count">7</div>
+                    <div style="color: #64738c; font-size: 12px;">(77.8%)</div>
+                </div>
+                
+
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ffc107;"></div>
+                    <div class="legend-text">Medium</div>
+                    <div class="legend-count">2</div>
+                    <div style="color: #64738c; font-size: 12px;">(22.2%)</div>
+                </div>
+                
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        
+        <div class="section">
+            <h2>Findings</h2>
+            
+            
+            <div class="finding high">
+                <span class="severity-badge severity-high">high</span>
+                <h3>Harvest DoS: zero per-strategy share causes magicHarvester.process to revert</h3>
+                <div class="vulnerability-description">
+                    <p>This vulnerability is a logic error that arises when a zero per-strategy share causes the magicHarvester.process method to revert during harvest operations. The root cause lies in the magicStaker.harvest function, which passes all positive reward token addresses to the harvester even when a strategy’s computed share for a token is zero. The magicHarvester.process function enforces that the amount must be greater than zero for every non-zero token slot, leading to a revert when this condition is not met. This issue presents a significant attack vector, wherein any harvest operation resulting in a computed share of zero for any reward token and strategy will block the entire harvest process for all users. This can occur commonly under conditions where strategy supply is small or rewards are minimal. Thus, the vulnerability could lead to a denial of service (DoS) scenario by preventing the redistribution of rewards to users.</p>
+                </div>
+                <p><strong>Affected Components:</strong> the magicStaker and magicHarvester contracts, specifically the harvest() and process() functions</p>
+                
+                <div class="qa-comment" style="margin-top: 1em; padding: 15px; background: rgba(70, 130, 180, 0.1); border-left: 3px solid #4682b4; border-radius: 8px;">
+                    <strong style="color: #64b5f6;">QA Review:</strong> 
+                    <span style="color: #c3cfe2; line-height: 1.6;">Upon reviewing magicStaker.sol:harvest(), the contract builds positiveRewards[] by setting each rewards[r] address when rewardBal &gt; 0, and for each non-last strategy computes stratShares[r] = (rewardBals[r] * stratSupply) / totalSupply using integer division. It then unconditionally calls Harvester(strategyHarvester[strategy]).process(positiveRewards, stratShares, strategy). In magicHarvester.sol:process(), for every non-zero _tokensIn[i] it invokes _process(..., _amountsIn[i]); _process requires _amountIn &gt; 0 and reverts with &quot;!amount&quot; otherwise. There is no filtering in magicStaker.harvest() to skip zero per-strategy amounts, and magicHarvester.process() only breaks on a zero token address, not on zero amounts. Therefore, any case where a strategy’s computed share for a positive reward token truncates to zero (common when stratSupply is small or rewards are small) causes a revert, DoSing the entire harvest and blocking rewards for all users. No guards mitigate this path, making the DoS reproducible whenever rewardBals[r] * stratSupply / totalSupply == 0 for a non-last strategy.</span>
+                </div>
+                
+                
+        <div class="code-sample">
+            <div class="code-header">
+                <span class="code-file">contracts/magicStaker.sol</span>
+                <div class="code-header-controls">
+                    <span class="code-lines">Lines 582-601</span>
+                    <button class="copy-btn" onclick="(async()=>{try{await navigator.clipboard.writeText(document.getElementById('code-block-1').innerText);}catch(e){}})()">Copy</button>
+                </div>
+            </div>
+            <div class="code-grid">
+                <div class="code-gutter"><pre>582
+583
+584
+585
+586
+587
+588
+589
+590
+591
+592
+593
+594
+595
+596
+597
+598
+599
+600
+601</pre></div>
+                <div class="code-content"><pre id="code-block-1"><code class="language-solidity">function harvest() external {
+    // before claiming, check if RSUP is a reward token
+    // It&#39;s not likely to ever become a reward token, but if it were to be added, it could interfere
+    // with cooldown balances sitting in this contract.
+    uint256 rsupBal;
+    if (isRewardToken[address(RSUP)]) {
+        rsupBal = RSUP.balanceOf(address(this));
+    }
+
+    // claim all rewards from staker
+    STAKER.getReward(address(this));
+
+    address[10] memory positiveRewards;
+    uint256[10] memory rewardBals;
+    uint256 rewLength = rewards.length;
+    uint256 stratLength = strategies.length;
+    // give caller their cut of all rewards
+    for (uint256 r = 0; r &lt; rewLength; ++r) {
+        uint256 rewardBal = rewards[r].balanceOf(address(this));
+        // if RSUP token, subtract any balance that was already here</code></pre></div>
+            </div>
+            <div class="code-explanation">The &#39;harvest&#39; function is responsible for distributing rewards to strategies. It processes rewards and calculates shares based on strategy balances, which are central to the vulnerability. The problem arises when a strategy&#39;s computed share is zero, leading to errors in subsequent processes.</div>
+        </div>
+        
+        <div class="code-sample">
+            <div class="code-header">
+                <span class="code-file">contracts/magicHarvester.sol</span>
+                <div class="code-header-controls">
+                    <span class="code-lines">Lines 143-160</span>
+                    <button class="copy-btn" onclick="(async()=>{try{await navigator.clipboard.writeText(document.getElementById('code-block-2').innerText);}catch(e){}})()">Copy</button>
+                </div>
+            </div>
+            <div class="code-grid">
+                <div class="code-gutter"><pre>143
+144
+145
+146
+147
+148
+149
+150
+151
+152
+153
+154
+155
+156
+157
+158
+159</pre></div>
+                <div class="code-content"><pre id="code-block-2"><code class="language-solidity">function process(address[10] memory _tokensIn, uint256[10] memory _amountsIn, address _strategy) external returns (uint256 tokenOutBal) {
+    require(rewardCaller[msg.sender], &quot;!auth&quot;);
+    Strategy strategy = Strategy(_strategy);
+    address strategyToken = strategy.desiredToken();
+    require(strategyToken != address(0), &quot;!tokenOut&quot;);
+    for (uint256 i = 0; i &lt; _tokensIn.length; i++) {
+        if(_tokensIn[i] == address(0)) {
+            break;
+        }
+        require(routes[_tokensIn[i]][strategyToken].length &gt; 0, &quot;!route&quot;);
+        _process(_tokensIn[i], strategyToken, _amountsIn[i]);
+    }
+    // notify strategy of reward
+    tokenOutBal = IERC20(strategyToken).balanceOf(address(this));
+    require(tokenOutBal &gt; 0, &quot;!reward&quot;);
+    strategy.notifyReward(tokenOutBal);
+}</code></pre></div>
+            </div>
+            <div class="code-explanation">The &#39;process&#39; function in &#39;magicHarvester&#39; enforces that the reward amounts must be greater than zero, which is the root cause of the reversion issue when a reward share is zero. This is directly related to the vulnerability where the &#39;harvest&#39; operation fails if any strategy&#39;s share is computed to be zero.</div>
+        </div>
+        
+                
+                <div class="remediation-section" style="margin-top: 1.5em; padding: 15px; background: rgba(40, 167, 69, 0.1); border-left: 3px solid #28a745; border-radius: 8px;">
+                    <h4 style="color: #28a745; margin-top: 0; margin-bottom: 10px; font-size: 16px;">
+                        <span style="margin-right: 8px;">✓</span>Remediation
+                    </h4>
+                    <div style="color: #c8d0db; line-height: 1.7;">
+                        <p>Filter out any reward tokens for which the calculated reward allocation (stratShares) is zero before calling magicHarvester.process. Implement a check in magicStaker.harvest to ensure only non-zero stratShares are passed to the process function. Use validation logic to allow processing only when stratShares are greater than zero to avoid reverting.</p>
+                    </div>
+                </div>
+                
+                
+            </div>
+            
+
+            <div class="finding high">
+                <span class="severity-badge severity-high">high</span>
+                <h3>Reward misallocation: totalSupply changes mid-harvest via reentrant magicStake</h3>
+                <div class="vulnerability-description">
+                    <p>A logic error vulnerability exists in the reward allocation process due to changes in totalSupply during harvest. In the magicStaker.harvest function, per-strategy shares are computed using the current totalSupply value. However, when an external call to Harvester.process is made, it can trigger notifications that include calling the magicStaker.magicStake function, leading to an increase in totalSupply. This alters the denominator for later strategies within the same harvest operation, causing systematic misallocation of rewards that unfairly benefits earlier strategies. The effect is a skewed distribution of rewards, with a potential remainder allocated disproportionately to the final strategy in the execution order.</p>
+                </div>
+                <p><strong>Affected Components:</strong> the magicStaker and magicPounder contracts, specifically the harvest(), notifyReward(), and magicStake() functions</p>
+                
+                <div class="qa-comment" style="margin-top: 1em; padding: 15px; background: rgba(70, 130, 180, 0.1); border-left: 3px solid #4682b4; border-radius: 8px;">
+                    <strong style="color: #64b5f6;">QA Review:</strong> 
+                    <span style="color: #c3cfe2; line-height: 1.6;">After analyzing the harvest logic in contracts/magicStaker.sol, I confirmed the misallocation issue. In magicStaker.harvest, per-strategy rewards are computed inside a loop as stratShares[r] = (rewardBals[r] * stratSupply) / totalSupply for all but the last strategy, using the live totalSupply state variable each iteration. Immediately after computing shares for a strategy, the code makes an external call to Harvester(strategyHarvester[strategy]).process(...). For strategy 0 (magicPounder), the harvester is expected to call magicPounder.notifyReward, which in turn calls magicStaker.magicStake(_amount) (contracts/magicPounder.sol) to stake RSUP and increments magicStaker.totalSupply. This changes the denominator mid-loop, causing later strategies’ allocations to be computed against a larger totalSupply while rewardBals[r] remains fixed, reducing their shares. The last strategy then receives the on-chain token balance remainder, cementing the bias toward earlier strategies. There is no snapshot of totalSupply or reentrancy guard to prevent this state change during distribution. The constructor fixes magicPounder at index 0, making the effect deterministic and exploitable via ordering.</span>
+                </div>
+                
+                
+        <div class="code-sample">
+            <div class="code-header">
+                <span class="code-file">contracts/magicStaker.sol</span>
+                <div class="code-header-controls">
+                    <span class="code-lines">Lines 582-601</span>
+                    <button class="copy-btn" onclick="(async()=>{try{await navigator.clipboard.writeText(document.getElementById('code-block-3').innerText);}catch(e){}})()">Copy</button>
+                </div>
+            </div>
+            <div class="code-grid">
+                <div class="code-gutter"><pre>582
+583
+584
+585
+586
+587
+588
+589
+590
+591
+592
+593
+594
+595
+596
+597
+598
+599
+600
+601</pre></div>
+                <div class="code-content"><pre id="code-block-3"><code class="language-solidity">function harvest() external {
+    // before claiming, check if RSUP is a reward token
+    // It&#39;s not likely to ever become a reward token, but if it were to be added, it could interfere
+    // with cooldown balances sitting in this contract.
+    uint256 rsupBal;
+    if (isRewardToken[address(RSUP)]) {
+        rsupBal = RSUP.balanceOf(address(this));
+    }
+
+    // claim all rewards from staker
+    STAKER.getReward(address(this));
+
+    address[10] memory positiveRewards;
+    uint256[10] memory rewardBals;
+    uint256 rewLength = rewards.length;
+    uint256 stratLength = strategies.length;
+    // give caller their cut of all rewards
+    for (uint256 r = 0; r &lt; rewLength; ++r) {
+        uint256 rewardBal = rewards[r].balanceOf(address(this));
+        // if RSUP token, subtract any balance that was already here</code></pre></div>
+            </div>
+            <div class="code-explanation">The function &#39;harvest&#39; illustrates the vulnerability as it calculates strategy shares using &#39;totalSupply&#39;. If a reentrant call to &#39;magicStake&#39; occurs intra-function through &#39;Harvester.process&#39;, &#39;totalSupply&#39; can change, leading to misallocation of rewards.</div>
+        </div>
+        
+        <div class="code-sample">
+            <div class="code-header">
+                <span class="code-file">contracts/magicStaker.sol</span>
+                <div class="code-header-controls">
+                    <span class="code-lines">Lines 649-661</span>
+                    <button class="copy-btn" onclick="(async()=>{try{await navigator.clipboard.writeText(document.getElementById('code-block-4').innerText);}catch(e){}})()">Copy</button>
+                </div>
+            </div>
+            <div class="code-grid">
+                <div class="code-gutter"><pre>649
+650
+651
+652
+653
+654
+655
+656
+657
+658
+659
+660
+661</pre></div>
+                <div class="code-content"><pre id="code-block-4"><code class="language-solidity">function magicStake(uint256 _amount) external {
+    require(msg.sender == strategies[0], &quot;!magic&quot;);
+    RSUP.safeTransferFrom(strategies[0], address(this), _amount);
+    STAKER.stake(_amount);
+    totalSupply += _amount;
+    emit MagicStake(_amount);
+}
+
+// ------------------------------------------------------------------------
+// MANAGER FUNCTIONS
+// ------------------------------------------------------------------------
+
+// Add reward token</code></pre></div>
+            </div>
+            <div class="code-explanation">The function &#39;magicStake&#39; increments &#39;totalSupply&#39; and this can be called reentrantly within &#39;harvest&#39;, leading to an unintended alteration of the denominator when calculating rewards for each strategy.</div>
+        </div>
+        
+        <div class="code-sample">
+            <div class="code-header">
+                <span class="code-file">contracts/magicPounder.sol</span>
+                <div class="code-header-controls">
+                    <span class="code-lines">Lines 81-89</span>
+                    <button class="copy-btn" onclick="(async()=>{try{await navigator.clipboard.writeText(document.getElementById('code-block-5').innerText);}catch(e){}})()">Copy</button>
+                </div>
+            </div>
+            <div class="code-grid">
+                <div class="code-gutter"><pre>81
+82
+83
+84
+85
+86
+87
+88
+89</pre></div>
+                <div class="code-content"><pre id="code-block-5"><code class="language-solidity">function notifyReward(uint256 _amount) external {
+    require(msg.sender == MagicStaker(magicStaker).strategyHarvester(address(this)));
+    IERC20(desiredToken).safeTransferFrom(msg.sender, address(this), _amount);
+    // magic stake RSUP
+    MagicStaker(magicStaker).magicStake(_amount);
+    totalSupply += _amount;
+}
+
+// needs to be immutable since this contract handles balances</code></pre></div>
+            </div>
+            <div class="code-explanation">The &#39;notifyReward&#39; function in &#39;magicPounder&#39; triggers &#39;magicStake&#39;, potentially leading to a reentrant call during &#39;harvest&#39; in &#39;magicStaker&#39;. This exemplifies the reentrancy flaw impacting &#39;totalSupply&#39;.</div>
+        </div>
+        
+                
+                <div class="remediation-section" style="margin-top: 1.5em; padding: 15px; background: rgba(40, 167, 69, 0.1); border-left: 3px solid #28a745; border-radius: 8px;">
+                    <h4 style="color: #28a745; margin-top: 0; margin-bottom: 10px; font-size: 16px;">
+                        <span style="margin-right: 8px;">✓</span>Remediation
+                    </h4>
+                    <div style="color: #c8d0db; line-height: 1.7;">
+                        <p>Capture the totalSupply variable once, before entering the per-strategy distribution loop in magicStaker.harvest, to ensure consistency across all iterations. Introduce a snapshot of the totalSupply at the beginning of the harvest process and use this snapshot for calculating shares. Avoid allowing changes to totalSupply during the execution of harvest by managing external calls and ensuring atomic transactions.</p>
+                    </div>
+                </div>
+                
+                
+            </div>
+            
+
+            <div class="finding high">
+                <span class="severity-badge severity-high">high</span>
+                <h3>Harvester credits full tokenOut balance instead of delta, enabling cross-strategy reward leakage</h3>
+                <div class="vulnerability-description">
+                    <p>This logic error vulnerability is due to the magicHarvester.process function incorrectly computing the tokenOutBal as the entire balance of the strategy’s desired token held by the harvester. Instead of calculating the delta produced by the current call, it forwards the entire balance to the strategy. As a result, any leftover desired tokens from prior operations are included in tokenOutBal, leading to potential mis-crediting of those tokens when processing another strategy that shares the same desired token. This bug enables reward leakage across different strategies, undermining the fidelity of strategy-specific reward allocations.</p>
+                </div>
+                <p><strong>Affected Components:</strong> the magicHarvester contract, specifically the process() function</p>
+                
+                <div class="qa-comment" style="margin-top: 1em; padding: 15px; background: rgba(70, 130, 180, 0.1); border-left: 3px solid #4682b4; border-radius: 8px;">
+                    <strong style="color: #64b5f6;">QA Review:</strong> 
+                    <span style="color: #c3cfe2; line-height: 1.6;">Upon reviewing contracts/magicHarvester.sol, I confirmed the mis-accounting vulnerability. In process(), after routing inputs via _process(), the contract computes tokenOutBal = IERC20(strategyToken).balanceOf(address(this)) and passes that full balance to strategy.notifyReward(tokenOutBal) without measuring the delta produced by this call. There is no per-call or per-strategy accounting and no balance-before/balance-after calculation. Additionally, _process() uses uint256 bal = IERC20(route.tokenIn).balanceOf(address(this)) and swaps the entire on-contract balance of each intermediate token, potentially absorbing unrelated holdings. As a result, any pre-existing balance of strategyToken (from a prior run that did not fully pull, rounding, or direct transfers to the harvester) is included and mis-credited when processing a different strategy that shares the same desired token. The rewardCaller check only restricts who may call process and does not prevent fund mixing. No guards reset or segregate balances, making cross-strategy reward leakage feasible and exploitable.</span>
+                </div>
+                
+                
+        <div class="code-sample">
+            <div class="code-header">
+                <span class="code-file">contracts/magicHarvester.sol</span>
+                <div class="code-header-controls">
+                    <span class="code-lines">Lines 143-160</span>
+                    <button class="copy-btn" onclick="(async()=>{try{await navigator.clipboard.writeText(document.getElementById('code-block-6').innerText);}catch(e){}})()">Copy</button>
+                </div>
+            </div>
+            <div class="code-grid">
+                <div class="code-gutter"><pre>143
+144
+145
+146
+147
+148
+149
+150
+151
+152
+153
+154
+155
+156
+157
+158
+159</pre></div>
+                <div class="code-content"><pre id="code-block-6"><code class="language-solidity">function process(address[10] memory _tokensIn, uint256[10] memory _amountsIn, address _strategy) external returns (uint256 tokenOutBal) {
+    require(rewardCaller[msg.sender], &quot;!auth&quot;);
+    Strategy strategy = Strategy(_strategy);
+    address strategyToken = strategy.desiredToken();
+    require(strategyToken != address(0), &quot;!tokenOut&quot;);
+    for (uint256 i = 0; i &lt; _tokensIn.length; i++) {
+        if(_tokensIn[i] == address(0)) {
+            break;
+        }
+        require(routes[_tokensIn[i]][strategyToken].length &gt; 0, &quot;!route&quot;);
+        _process(_tokensIn[i], strategyToken, _amountsIn[i]);
+    }
+    // notify strategy of reward
+    tokenOutBal = IERC20(strategyToken).balanceOf(address(this));
+    require(tokenOutBal &gt; 0, &quot;!reward&quot;);
+    strategy.notifyReward(tokenOutBal);
+}</code></pre></div>
+            </div>
+            <div class="code-explanation">The process function is the main target function mentioned in the input. It contains the core vulnerability by calculating tokenOutBal as the entire balance of strategy&#39;s desired token held by the harvester, instead of the delta, forwarding the entire balance to the strategy.</div>
+        </div>
+        
+                
+                <div class="remediation-section" style="margin-top: 1.5em; padding: 15px; background: rgba(40, 167, 69, 0.1); border-left: 3px solid #28a745; border-radius: 8px;">
+                    <h4 style="color: #28a745; margin-top: 0; margin-bottom: 10px; font-size: 16px;">
+                        <span style="margin-right: 8px;">✓</span>Remediation
+                    </h4>
+                    <div style="color: #c8d0db; line-height: 1.7;">
+                        <p>Calculate the delta of tokenOutBal as the difference between the current balance and initial balance before processing, rather than using the entire balance. Update magicHarvester.process to compute tokenOutBal using the difference in balance from before and after the process execution. Implement logic to maintain separation of balances across runs/strategies by tracking before and after states explicitly.</p>
+                    </div>
+                </div>
+                
+                
+            </div>
+            
+
+            <div class="finding high">
+                <span class="severity-badge severity-high">high</span>
+                <h3>Route testing in setRoute can sweep all existing tokenOut from harvester to operator (no delta accounting)</h3>
+                <div class="vulnerability-description">
+                    <p>A significant access control issue is present in the route testing mechanism within the magicHarvester.setRoute function. During the update of token swap routes, the setRoute function transfers the entire balance of tokenOut held by the harvester to the operator after a test swap, rather than only the balance newly produced by the swap operation. This oversight allows a privileged operator to effectively sweep all existing strategy rewards from the harvester, including pre-existing balances, during route testing or updates.</p>
+                </div>
+                <p><strong>Affected Components:</strong> the magicHarvester contract, specifically the setRoute() function</p>
+                
+                <div class="qa-comment" style="margin-top: 1em; padding: 15px; background: rgba(70, 130, 180, 0.1); border-left: 3px solid #4682b4; border-radius: 8px;">
+                    <strong style="color: #64b5f6;">QA Review:</strong> 
+                    <span style="color: #c3cfe2; line-height: 1.6;">Upon reviewing magicHarvester.setRoute in contracts/magicHarvester.sol, I confirmed the hypothesized issue. When _routes.length &gt; 0, the function first overwrites routes[_tokenIn][_tokenOut] and then performs a test swap via _process(_tokenIn, _tokenOut, _testAmount). Immediately after, it executes IERC20(_tokenOut).safeTransfer(msg.sender, IERC20(_tokenOut).balanceOf(address(this))), which transfers the entire tokenOut balance held by the harvester to the caller (the operator), without accounting for the delta produced by the test. Because process() can legitimately leave non-zero tokenOut balances on the harvester (it only calls strategy.notifyReward without transferring tokens), any residual rewards or dust of tokenOut present before setRoute is called will be swept to the operator. There are no guards to snapshot pre/post balances or limit the transfer to the test output, and onlyOperator is insufficient as a mitigation if the operator is compromised or untrusted. This constitutes a clear, exploitable privileged fund-sweep path.</span>
+                </div>
+                
+                
+        <div class="code-sample">
+            <div class="code-header">
+                <span class="code-file">contracts/magicHarvester.sol</span>
+                <div class="code-header-controls">
+                    <span class="code-lines">Lines 101-120</span>
+                    <button class="copy-btn" onclick="(async()=>{try{await navigator.clipboard.writeText(document.getElementById('code-block-7').innerText);}catch(e){}})()">Copy</button>
+                </div>
+            </div>
+            <div class="code-grid">
+                <div class="code-gutter"><pre>101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120</pre></div>
+                <div class="code-content"><pre id="code-block-7"><code class="language-solidity">function setRoute(
+    address _tokenIn,
+    Route[] memory _routes,
+    address _tokenOut,
+    uint256 _testAmount,
+    bool _removeApprovals
+) external onlyOperator {
+    // can pass 0 routes to delete existing route, otherwise needs validation and test
+    if(_routes.length &gt; 0) {
+        require(_routes[0].tokenIn == _tokenIn, &quot;!start&quot;);
+        require(_routes[_routes.length - 1].tokenOut == _tokenOut, &quot;!end&quot;);
+        require(_testAmount &gt; 0, &quot;!test&quot;);
+    }
+
+    if(_removeApprovals) {
+        // remove token approvals for each step
+        for (uint256 i = 0; i &lt; routes[_tokenIn][_tokenOut].length; i++) {
+            IERC20(routes[_tokenIn][_tokenOut][i].tokenIn).approve(routes[_tokenIn][_tokenOut][i].pool, 0);
+        }
+    }</code></pre></div>
+            </div>
+            <div class="code-explanation">This snippet captures the setRoute function where the vulnerability is present. The function incorrectly transfers the entire balance of tokenOut from the contract to the caller after testing a swap route, which could allow a malicious operator to sweep all pre-existing balances.</div>
+        </div>
+        
+                
+                <div class="remediation-section" style="margin-top: 1.5em; padding: 15px; background: rgba(40, 167, 69, 0.1); border-left: 3px solid #28a745; border-radius: 8px;">
+                    <h4 style="color: #28a745; margin-top: 0; margin-bottom: 10px; font-size: 16px;">
+                        <span style="margin-right: 8px;">✓</span>Remediation
+                    </h4>
+                    <div style="color: #c8d0db; line-height: 1.7;">
+                        <p>Modify setRoute to calculate and transfer only the delta of the tokenOut balance post-process swap. Ensure the function transfers only the difference in balance caused by the test swap, rather than the entire balance. Apply practice of using balance snapshots before and after operations to transfer only the new tokens generated by the operation.</p>
+                    </div>
+                </div>
+                
+                
+            </div>
+            
+
+            <div class="finding high">
+                <span class="severity-badge severity-high">high</span>
+                <h3>Deflationary/fee-on-transfer reward tokens inflate rewardIndex causing insolvency and claim DoS</h3>
+                <div class="vulnerability-description">
+                    <p>An accounting logic error is present in the Strategy:magicSavings.notifyReward function, specifically when handling deflationary or fee-on-transfer reward tokens. The function credits a nominal _amount into the rewardIndex without accounting for the actual number of tokens received, which is often less due to token-specific transfer fees or deflation. Consequently, the rewardIndex is overestimated, leading to situations where user claims exceed the contract's actual balance, resulting in claim reverts and a denial of service condition until balances are externally corrected.</p>
+                </div>
+                <p><strong>Affected Components:</strong> the magicSavings strategy, specifically the notifyReward() function</p>
+                
+                <div class="qa-comment" style="margin-top: 1em; padding: 15px; background: rgba(70, 130, 180, 0.1); border-left: 3px solid #4682b4; border-radius: 8px;">
+                    <strong style="color: #64b5f6;">QA Review:</strong> 
+                    <span style="color: #c3cfe2; line-height: 1.6;">After analyzing contracts/magicSavings.sol, I confirmed the vulnerability. In notifyReward(uint256 _amount), the contract calls rewardToken.safeTransferFrom(msg.sender, address(this), _amount) and then unconditionally increases rewardIndex by (_amount * MULTIPLIER) / totalSupply. There is no check of the actual rewardToken amount received (e.g., via a pre/post balance delta). For fee-on-transfer/deflationary tokens, safeTransferFrom can succeed while delivering fewer tokens than _amount, causing rewardIndex to over-credit user rewards. Later, claim() computes rewards based on this inflated rewardIndex and attempts rewardToken.safeTransfer(msg.sender, reward). If the contract’s real balance is insufficient due to the earlier mismatch, the transfer reverts, resulting in a claim DoS and insolvency until externally topped up. The caller restriction in notifyReward (only strategyHarvester via MagicStaker.strategyHarvester) does not mitigate this accounting flaw if the configured reward token exhibits taxed/deflationary behavior. No guards or balance-delta accounting are present to prevent or correct the mismatch, making the issue exploitable.</span>
+                </div>
+                
+                
+        <div class="code-sample">
+            <div class="code-header">
+                <span class="code-file">contracts/magicSavings.sol</span>
+                <div class="code-header-controls">
+                    <span class="code-lines">Lines 34-39</span>
+                    <button class="copy-btn" onclick="(async()=>{try{await navigator.clipboard.writeText(document.getElementById('code-block-8').innerText);}catch(e){}})()">Copy</button>
+                </div>
+            </div>
+            <div class="code-grid">
+                <div class="code-gutter"><pre>34
+35
+36
+37
+38</pre></div>
+                <div class="code-content"><pre id="code-block-8"><code class="language-solidity">function notifyReward(uint256 _amount) external {
+    require(msg.sender == MagicStaker(magicStaker).strategyHarvester(address(this)));
+    rewardToken.safeTransferFrom(msg.sender, address(this), _amount);
+    rewardIndex += (_amount * MULTIPLIER) / totalSupply;
+}</code></pre></div>
+            </div>
+            <div class="code-explanation">This snippet represents the notifyReward function, which is directly related to the vulnerability. It adds the nominal _amount to the rewardIndex without accounting for any transfer fees from deflationary or fee-on-transfer tokens, which could lead to insolvency and claim DoS.</div>
+        </div>
+        
+                
+                <div class="remediation-section" style="margin-top: 1.5em; padding: 15px; background: rgba(40, 167, 69, 0.1); border-left: 3px solid #28a745; border-radius: 8px;">
+                    <h4 style="color: #28a745; margin-top: 0; margin-bottom: 10px; font-size: 16px;">
+                        <span style="margin-right: 8px;">✓</span>Remediation
+                    </h4>
+                    <div style="color: #c8d0db; line-height: 1.7;">
+                        <p>Measure and credit the actual tokens received during the notifyReward process by computing the difference between pre- and post-transfer balances rather than assuming full amount. Modify rewardIndex calculation to include checks on actual tokens deposited versus nominal amounts. Employ best practices for dealing with deflationary tokens by appropriately tracking net balances received.</p>
+                    </div>
+                </div>
+                
+                
+            </div>
+            
+
+            <div class="finding high">
+                <span class="severity-badge severity-high">high</span>
+                <h3>Unchecked Registry.getAddress result can set zero/EOA/malicious Voter, bricking or hijacking governance</h3>
+                <div class="vulnerability-description">
+                    <p>An access control vulnerability exists due to the unchecked assignment of the Voter address in the magicStaker contract through Registry.getAddress. This function does not validate the received address, whether it is non-zero or a contract, and relies entirely on the integrity of the external Registry. If the Registry returns an invalid, zero, or malicious address, critical governance functionality can be hijacked or rendered inoperative. This opens the contract to potential denial of service or malicious reentrancy exploits by setting Voter to an attacker-controlled address.</p>
+                </div>
+                <p><strong>Affected Components:</strong> the magicStaker contract and the external Registry contract, specifically the setResupplyVoter() function</p>
+                
+                <div class="qa-comment" style="margin-top: 1em; padding: 15px; background: rgba(70, 130, 180, 0.1); border-left: 3px solid #4682b4; border-radius: 8px;">
+                    <strong style="color: #64b5f6;">QA Review:</strong> 
+                    <span style="color: #c3cfe2; line-height: 1.6;">After analyzing magicStaker.sol and magicStaker-original-draft.sol, I confirmed the issue: both constructors set the critical voter variable directly from the external registry (voter = Voter(REGISTRY.getAddress(&quot;VOTER&quot;)) / voter = Voter(registry.getAddress(&quot;VOTER&quot;))) without validating nonzero or code presence. The operator-only setResupplyVoter() repeats this pattern, assigning voter = Voter(_voter) and forwarding it to MagicVoter.setResupplyVoter(_voter) with no checks. Subsequent governance operations depend on voter: createProposal() uses voter.minCreateProposalWeight() and voter.createNewProposal(), and castVote() calls voter.voteForProposal(). If REGISTRY returns address(0) or an EOA, createProposal will revert on return decoding (DoS), and castVote will silently no-op, effectively bricking forwarding. If REGISTRY returns a malicious contract, these functions will execute attacker-controlled logic. There are no guards like require(_voter != address(0)) or require(_voter.code.length &gt; 0), and onlyOperator does not mitigate a compromised/misconfigured registry or deployment-time misconfiguration. Therefore, the lack of validation on a critical control address is a real, exploitable reliability and security risk to governance flow.</span>
+                </div>
+                
+                
+        <div class="code-sample">
+            <div class="code-header">
+                <span class="code-file">contracts/magicStaker.sol</span>
+                <div class="code-header-controls">
+                    <span class="code-lines">Lines 747-754</span>
+                    <button class="copy-btn" onclick="(async()=>{try{await navigator.clipboard.writeText(document.getElementById('code-block-9').innerText);}catch(e){}})()">Copy</button>
+                </div>
+            </div>
+            <div class="code-grid">
+                <div class="code-gutter"><pre>747
+748
+749
+750
+751
+752
+753
+754</pre></div>
+                <div class="code-content"><pre id="code-block-9"><code class="language-solidity">function setResupplyVoter() external onlyOperator {
+    address _voter = REGISTRY.getAddress(&quot;VOTER&quot;);
+    voter = Voter(_voter);
+    MagicVoter(magicVoter).setResupplyVoter(_voter);
+    emit ResupplyVoterSet(_voter);
+}
+
+// Set delegate approval for voter contract</code></pre></div>
+            </div>
+            <div class="code-explanation">This snippet from the setResupplyVoter function shows how the contract retrieves an address from the external Registry without validation, which is the core of the reported vulnerability. The unchecked assignment allows for setting a potentially malicious address.</div>
+        </div>
+        
+                
+                <div class="remediation-section" style="margin-top: 1.5em; padding: 15px; background: rgba(40, 167, 69, 0.1); border-left: 3px solid #28a745; border-radius: 8px;">
+                    <h4 style="color: #28a745; margin-top: 0; margin-bottom: 10px; font-size: 16px;">
+                        <span style="margin-right: 8px;">✓</span>Remediation
+                    </h4>
+                    <div style="color: #c8d0db; line-height: 1.7;">
+                        <p>Validate the address returned from REGISTRY.getAddress("VOTER") for non-zero and contract code presence before assignment. Add validation logic in magicStaker setResupplyVoter to confirm the voter address is non-zero and not an EOA. Introduce safeguards like external registry audit practices and fallback governance mechanisms to ensure only valid addresses are accepted.</p>
+                    </div>
+                </div>
+                
+                
+            </div>
+            
+
+            <div class="finding high">
+                <span class="severity-badge severity-high">high</span>
+                <h3>Unlimited allowance to strategies enables draining harvester-held rewards</h3>
+                <div class="vulnerability-description">
+                    <p>A critical access control vulnerability is introduced by the magicHarvester.approveStrategy function, which grants unlimited allowances of a desired token to the Strategy address without safeguards against misuse. Such approval enables any malicious or compromised Strategy to call transferFrom and drain all harvester-held tokenOut balances, either intended for other strategy allocations or as a result of residual holding. This raises a significant security risk of unauthorized fund transfers, especially in scenarios where the Strategy can be compromised or controlled.</p>
+                </div>
+                <p><strong>Affected Components:</strong> the magicHarvester contract, specifically the approveStrategy and process() functions</p>
+                
+                <div class="qa-comment" style="margin-top: 1em; padding: 15px; background: rgba(70, 130, 180, 0.1); border-left: 3px solid #4682b4; border-radius: 8px;">
+                    <strong style="color: #64b5f6;">QA Review:</strong> 
+                    <span style="color: #c3cfe2; line-height: 1.6;">After analyzing contracts/magicHarvester.sol, I confirmed the issue. In approveStrategy(address _strategy, bool _approve), the contract grants the Strategy an unlimited allowance (type(uint256).max) for Strategy(_strategy).desiredToken() and never revokes or scopes it per distribution. In process(...), after routing conversions, the contract computes tokenOutBal = IERC20(strategyToken).balanceOf(address(this)) and merely calls strategy.notifyReward(tokenOutBal) without transferring tokens out, leaving the entire tokenOut balance on the harvester. Because the Strategy is an approved spender, a malicious/compromised (or upgradable) strategy can at any time call IERC20(desiredToken).transferFrom(address(this), attacker, amount) to drain the harvester’s balance for that token. There is no per-strategy accounting, spend limit, or escrow, and no enforcement that a strategy may only pull the amount notified. If multiple strategies share the same desiredToken, one can drain balances intended for another. The only gates (onlyOperator on approveStrategy and rewardCaller on process) do not restrict spender behavior post-approval.</span>
+                </div>
+                
+                
+        <div class="code-sample">
+            <div class="code-header">
+                <span class="code-file">contracts/magicHarvester.sol</span>
+                <div class="code-header-controls">
+                    <span class="code-lines">Lines 95-100</span>
+                    <button class="copy-btn" onclick="(async()=>{try{await navigator.clipboard.writeText(document.getElementById('code-block-10').innerText);}catch(e){}})()">Copy</button>
+                </div>
+            </div>
+            <div class="code-grid">
+                <div class="code-gutter"><pre>95
+96
+97
+98
+99</pre></div>
+                <div class="code-content"><pre id="code-block-10"><code class="language-solidity">function approveStrategy(address _strategy, bool _approve) external onlyOperator {
+    address strategyToken = Strategy(_strategy).desiredToken();
+    IERC20(strategyToken).approve(_strategy, _approve ? type(uint256).max : 0);
+    emit StrategyApproval(strategyToken, _strategy, _approve);
+}</code></pre></div>
+            </div>
+            <div class="code-explanation">The approveStrategy function is directly responsible for granting unlimited allowances to a strategy. This represents the core of the vulnerability, as it approves the maximum allowance for a strategy without safeguards, potentially enabling token draining.</div>
+        </div>
+        
+        <div class="code-sample">
+            <div class="code-header">
+                <span class="code-file">contracts/magicHarvester.sol</span>
+                <div class="code-header-controls">
+                    <span class="code-lines">Lines 143-160</span>
+                    <button class="copy-btn" onclick="(async()=>{try{await navigator.clipboard.writeText(document.getElementById('code-block-11').innerText);}catch(e){}})()">Copy</button>
+                </div>
+            </div>
+            <div class="code-grid">
+                <div class="code-gutter"><pre>143
+144
+145
+146
+147
+148
+149
+150
+151
+152
+153
+154
+155
+156
+157
+158
+159</pre></div>
+                <div class="code-content"><pre id="code-block-11"><code class="language-solidity">function process(address[10] memory _tokensIn, uint256[10] memory _amountsIn, address _strategy) external returns (uint256 tokenOutBal) {
+    require(rewardCaller[msg.sender], &quot;!auth&quot;);
+    Strategy strategy = Strategy(_strategy);
+    address strategyToken = strategy.desiredToken();
+    require(strategyToken != address(0), &quot;!tokenOut&quot;);
+    for (uint256 i = 0; i &lt; _tokensIn.length; i++) {
+        if(_tokensIn[i] == address(0)) {
+            break;
+        }
+        require(routes[_tokensIn[i]][strategyToken].length &gt; 0, &quot;!route&quot;);
+        _process(_tokensIn[i], strategyToken, _amountsIn[i]);
+    }
+    // notify strategy of reward
+    tokenOutBal = IERC20(strategyToken).balanceOf(address(this));
+    require(tokenOutBal &gt; 0, &quot;!reward&quot;);
+    strategy.notifyReward(tokenOutBal);
+}</code></pre></div>
+            </div>
+            <div class="code-explanation">The process function is relevant because it interacts with strategies to notify them of rewards processed. It ensures the strategy has a route set, which indirectly involves the use of the approved strategies that have been given unlimited allowances.</div>
+        </div>
+        
+                
+                <div class="remediation-section" style="margin-top: 1.5em; padding: 15px; background: rgba(40, 167, 69, 0.1); border-left: 3px solid #28a745; border-radius: 8px;">
+                    <h4 style="color: #28a745; margin-top: 0; margin-bottom: 10px; font-size: 16px;">
+                        <span style="margin-right: 8px;">✓</span>Remediation
+                    </h4>
+                    <div style="color: #c8d0db; line-height: 1.7;">
+                        <p>Replace the unlimited allowance pattern with explicitly managed allowance or zero permanent allowances post-process completion. Modify magicHarvester.approveStrategy to use minimum necessary allowances per operation, resetting address permissions upon completion of token transfers. Utilize safe patterns like token transfer atomicity and adjust privilege management for cross-strategy interactions.</p>
+                    </div>
+                </div>
+                
+                
+            </div>
+            
+
+            <div class="finding medium">
+                <span class="severity-badge severity-medium">medium</span>
+                <h3>Rounding threshold DoS in magicPounder.setUserBalance blocks small updates</h3>
+                <div class="vulnerability-description">
+                    <p>A logic error in the magicPounder.setUserBalance function imposes a rounding threshold that blocks small updates. This function requires that the underlyingToShares calculation result in a share allocation that meets a minimum threshold, which can trigger a revert for small delta values. When the per-sync delta assigned by the magicStaker is below this threshold, it causes setUserBalance to fail, preventing legitimate updates for user stake or weight adjustments. This vulnerability primarily poses a risk of denial of service by obstructing small, but potentially critical, rebalancing actions into or out of the magicPounder strategy.</p>
+                </div>
+                <p><strong>Affected Components:</strong> the magicPounder strategy, specifically the setUserBalance() function</p>
+                
+                <div class="qa-comment" style="margin-top: 1em; padding: 15px; background: rgba(70, 130, 180, 0.1); border-left: 3px solid #4682b4; border-radius: 8px;">
+                    <strong style="color: #64b5f6;">QA Review:</strong> 
+                    <span style="color: #c3cfe2; line-height: 1.6;">Upon reviewing contracts/magicPounder.sol and its integration from magicStaker.sol, I confirm a real per-user DoS caused by a minimum-delta constraint. In magicPounder.underlyingToShares(), the require(_amount * sharesTotalSupply &gt;= totalSupply, &quot;!small&quot;) enforces that any adjustment must mint/burn at least 1 wei of share. setUserBalance() uses underlyingToShares(diff) for both add and remove paths without checking diff against that threshold, so small deltas revert. magicStaker._setUserStrategyBalance() calls strategy.setUserBalance() during setWeights/syncAccount without any guard to skip tiny adjustments; only exact-equality is skipped. Because strategy 0 (magicPounder) is not guaranteed to be the last strategy, integer division and small weight changes can yield 1–few wei deltas for that strategy. As notifyReward() increases totalSupply while sharesTotalSupply stays fixed, price-per-share grows, making the minimum underlying delta (ceil(totalSupply/sharesTotalSupply)) increase over time. This causes setWeights or rebalances to revert for users whose required delta falls below the threshold, blocking their updates. While impact is scoped to the caller (not system-wide), the failure mode is clear and reproducible from the provided code.</span>
+                </div>
+                
+                
+        <div class="code-sample">
+            <div class="code-header">
+                <span class="code-file">contracts/magicPounder.sol</span>
+                <div class="code-header-controls">
+                    <span class="code-lines">Lines 51-70</span>
+                    <button class="copy-btn" onclick="(async()=>{try{await navigator.clipboard.writeText(document.getElementById('code-block-12').innerText);}catch(e){}})()">Copy</button>
+                </div>
+            </div>
+            <div class="code-grid">
+                <div class="code-gutter"><pre>51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70</pre></div>
+                <div class="code-content"><pre id="code-block-12"><code class="language-solidity">function setUserBalance(address _account, uint256 _balance) external onlyMagicStaker {
+    require(_account != address(0), &quot;!account&quot;);
+    uint256 userBalance = balanceOf(_account);
+    if(_balance == 0) {
+        totalSupply -= userBalance;
+        sharesTotalSupply -= sharesOf[_account];
+        sharesOf[_account] = 0;
+        return;
+    }
+    if(_balance &lt; userBalance) {
+        uint256 diff = userBalance - _balance;
+        uint256 removeShares = underlyingToShares(diff);
+        if(removeShares &gt; sharesOf[_account]) {
+            removeShares = sharesOf[_account];
+        }
+        sharesOf[_account] -= removeShares;
+        sharesTotalSupply -= removeShares;
+        totalSupply -= diff;
+        return;
+    }</code></pre></div>
+            </div>
+            <div class="code-explanation">This snippet includes the setUserBalance function implementation, which is the primary target. It highlights the logic flaw where small balance updates might not pass the underlyingToShares minimum threshold, resulting in a revert and causing a potential denial of service.</div>
+        </div>
+        
+        <div class="code-sample">
+            <div class="code-header">
+                <span class="code-file">contracts/magicPounder.sol</span>
+                <div class="code-header-controls">
+                    <span class="code-lines">Lines 43-50</span>
+                    <button class="copy-btn" onclick="(async()=>{try{await navigator.clipboard.writeText(document.getElementById('code-block-13').innerText);}catch(e){}})()">Copy</button>
+                </div>
+            </div>
+            <div class="code-grid">
+                <div class="code-gutter"><pre>43
+44
+45
+46
+47
+48
+49</pre></div>
+                <div class="code-content"><pre id="code-block-13"><code class="language-solidity">function underlyingToShares(uint256 _amount) public view returns (uint256) {
+    if(sharesTotalSupply == 0) {
+        return _amount;
+    }
+    require(_amount * sharesTotalSupply &gt;= totalSupply, &quot;!small&quot;);
+    return (_amount * sharesTotalSupply) / totalSupply;
+}</code></pre></div>
+            </div>
+            <div class="code-explanation">This snippet contains the underlyingToShares function used in setUserBalance. It includes the condition that enforces the minimum threshold requirement, which fails for small deltas, contributing to the main vulnerability.</div>
+        </div>
+        
+                
+                <div class="remediation-section" style="margin-top: 1.5em; padding: 15px; background: rgba(40, 167, 69, 0.1); border-left: 3px solid #28a745; border-radius: 8px;">
+                    <h4 style="color: #28a745; margin-top: 0; margin-bottom: 10px; font-size: 16px;">
+                        <span style="margin-right: 8px;">✓</span>Remediation
+                    </h4>
+                    <div style="color: #c8d0db; line-height: 1.7;">
+                        <p>Implement a minimum threshold check before executing setUserBalance to accommodate small balances. Adjust underlyingToShares to account for smaller deltas and avoid the rounding threshold issue by introducing fractional shares if applicable. Use mechanisms to re-calculate thresholds dynamically as compounding affects share values.</p>
+                    </div>
+                </div>
+                
+                
+            </div>
+            
+
+            <div class="finding medium">
+                <span class="severity-badge severity-medium">medium</span>
+                <h3>Route test in setRoute pulls tokens from Operator wallet (msg.sender) via _process safeTransferFrom</h3>
+                <div class="vulnerability-description">
+                    <p>This logic error occurs in the magicHarvester.setRoute function during route testing, where tokens are inadvertently pulled from the Operator's wallet instead of the harvester or a reward caller. The _process function is called during testing with the Operator as the msg.sender, which results in the safeTransferFrom operation drawing tokens from the Operator's wallet. This design flaw can lead to unintended losses during route updates if valuable tokens are involved or if a malicious token behaves unexpectedly during processing.</p>
+                </div>
+                <p><strong>Affected Components:</strong> the magicHarvester contract, specifically the setRoute() and _process() functions</p>
+                
+                <div class="qa-comment" style="margin-top: 1em; padding: 15px; background: rgba(70, 130, 180, 0.1); border-left: 3px solid #4682b4; border-radius: 8px;">
+                    <strong style="color: #64b5f6;">QA Review:</strong> 
+                    <span style="color: #c3cfe2; line-height: 1.6;">After analyzing the magicHarvester contract in contracts/magicHarvester.sol, I confirmed the issue. In setRoute (onlyOperator), when a non-empty route is provided it mandates a live test by calling _process(_tokenIn, _tokenOut, _testAmount). Inside _process, the first action is IERC20(_tokenIn).safeTransferFrom(msg.sender, address(this), _amountIn). During setRoute, msg.sender is the Operator, not the harvester itself or a reward caller, so the function pulls _testAmount of _tokenIn from the Operator’s wallet if an allowance exists. The subsequent line in setRoute refunds the resulting _tokenOut back to msg.sender (IERC20(_tokenOut).safeTransfer(msg.sender, IERC20(_tokenOut).balanceOf(address(this))), but the Operator still funds the test and bears slippage or any adverse/malicious token behavior. There are no guards to source tokens from the contract’s balance, simulate the swap, or require explicit consent beyond _testAmount &gt; 0; the behavior hinges solely on the Operator’s prior approval. This creates a clear, reproducible footgun that can unintentionally transfer Operator funds during route testing, as described.</span>
+                </div>
+                
+                
+        <div class="code-sample">
+            <div class="code-header">
+                <span class="code-file">contracts/magicHarvester.sol</span>
+                <div class="code-header-controls">
+                    <span class="code-lines">Lines 101-120</span>
+                    <button class="copy-btn" onclick="(async()=>{try{await navigator.clipboard.writeText(document.getElementById('code-block-14').innerText);}catch(e){}})()">Copy</button>
+                </div>
+            </div>
+            <div class="code-grid">
+                <div class="code-gutter"><pre>101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120</pre></div>
+                <div class="code-content"><pre id="code-block-14"><code class="language-solidity">function setRoute(
+    address _tokenIn,
+    Route[] memory _routes,
+    address _tokenOut,
+    uint256 _testAmount,
+    bool _removeApprovals
+) external onlyOperator {
+    // can pass 0 routes to delete existing route, otherwise needs validation and test
+    if(_routes.length &gt; 0) {
+        require(_routes[0].tokenIn == _tokenIn, &quot;!start&quot;);
+        require(_routes[_routes.length - 1].tokenOut == _tokenOut, &quot;!end&quot;);
+        require(_testAmount &gt; 0, &quot;!test&quot;);
+    }
+
+    if(_removeApprovals) {
+        // remove token approvals for each step
+        for (uint256 i = 0; i &lt; routes[_tokenIn][_tokenOut].length; i++) {
+            IERC20(routes[_tokenIn][_tokenOut][i].tokenIn).approve(routes[_tokenIn][_tokenOut][i].pool, 0);
+        }
+    }</code></pre></div>
+            </div>
+            <div class="code-explanation">The setRoute function initiates a token transfer from msg.sender during route testing, which could inadvertently lead to tokens being pulled from the Operator&#39;s wallet instead of the intended source due to the wrong address being used.</div>
+        </div>
+        
+        <div class="code-sample">
+            <div class="code-header">
+                <span class="code-file">contracts/magicHarvester.sol</span>
+                <div class="code-header-controls">
+                    <span class="code-lines">Lines 161-179</span>
+                    <button class="copy-btn" onclick="(async()=>{try{await navigator.clipboard.writeText(document.getElementById('code-block-15').innerText);}catch(e){}})()">Copy</button>
+                </div>
+            </div>
+            <div class="code-grid">
+                <div class="code-gutter"><pre>161
+162
+163
+164
+165
+166
+167
+168
+169
+170
+171
+172
+173
+174
+175
+176
+177
+178
+179</pre></div>
+                <div class="code-content"><pre id="code-block-15"><code class="language-solidity">function _process(address _tokenIn, address _tokenOut, uint256 _amountIn) internal {
+    require(_amountIn &gt; 0, &quot;!amount&quot;);
+    IERC20(_tokenIn).safeTransferFrom(msg.sender, address(this), _amountIn);
+    for (uint256 i = 0; i &lt; routes[_tokenIn][_tokenOut].length; i++) {
+        Route memory route = routes[_tokenIn][_tokenOut][i];
+        uint256 bal = IERC20(route.tokenIn).balanceOf(address(this));
+        require(bal &gt; 0, &quot;!balance&quot;);
+        if (route.functionType == 0) {
+            // curve exchange
+            uint256 oracle = CurvePool(route.pool).price_oracle(0);
+            uint256 expectedOut;
+            if(route.indexIn == 1) {
+                expectedOut = (bal * (oracle * SCRVUSD.pricePerShare() / (10 ** 18))) / (10 ** 18); // Curve oracle is in 18 decimals
+            } else {
+                expectedOut = (bal * (10 ** 18)) / (oracle * SCRVUSD.pricePerShare() / (10 ** 18)); // And scrvUSD pools are denominated in crvUSD underlying
+            }
+            uint256 minOut = (expectedOut * (10000 - maxSlippage)) / 10000;
+
+            CurvePool(route.pool).exchange{value: 0}(int128(int256(route.indexIn)), int128(int256(route.indexOut)), bal, minOut);</code></pre></div>
+            </div>
+            <div class="code-explanation">The _process function is called within setRoute where the logic error originates. It uses safeTransferFrom with msg.sender, causing tokens to be drawn from Operator&#39;s wallet.</div>
+        </div>
+        
+        <div class="code-sample">
+            <div class="code-header">
+                <span class="code-file">contracts/magicHarvester.sol</span>
+                <div class="code-header-controls">
+                    <span class="code-lines">Lines 143-160</span>
+                    <button class="copy-btn" onclick="(async()=>{try{await navigator.clipboard.writeText(document.getElementById('code-block-16').innerText);}catch(e){}})()">Copy</button>
+                </div>
+            </div>
+            <div class="code-grid">
+                <div class="code-gutter"><pre>143
+144
+145
+146
+147
+148
+149
+150
+151
+152
+153
+154
+155
+156
+157
+158
+159</pre></div>
+                <div class="code-content"><pre id="code-block-16"><code class="language-solidity">function process(address[10] memory _tokensIn, uint256[10] memory _amountsIn, address _strategy) external returns (uint256 tokenOutBal) {
+    require(rewardCaller[msg.sender], &quot;!auth&quot;);
+    Strategy strategy = Strategy(_strategy);
+    address strategyToken = strategy.desiredToken();
+    require(strategyToken != address(0), &quot;!tokenOut&quot;);
+    for (uint256 i = 0; i &lt; _tokensIn.length; i++) {
+        if(_tokensIn[i] == address(0)) {
+            break;
+        }
+        require(routes[_tokensIn[i]][strategyToken].length &gt; 0, &quot;!route&quot;);
+        _process(_tokensIn[i], strategyToken, _amountsIn[i]);
+    }
+    // notify strategy of reward
+    tokenOutBal = IERC20(strategyToken).balanceOf(address(this));
+    require(tokenOutBal &gt; 0, &quot;!reward&quot;);
+    strategy.notifyReward(tokenOutBal);
+}</code></pre></div>
+            </div>
+            <div class="code-explanation">The process function authorizes reward call actions and ensures the Operator wallet is the source, highlighting that only authorized callers should trigger such sensitive operations.</div>
+        </div>
+        
+                
+                <div class="remediation-section" style="margin-top: 1.5em; padding: 15px; background: rgba(40, 167, 69, 0.1); border-left: 3px solid #28a745; border-radius: 8px;">
+                    <h4 style="color: #28a745; margin-top: 0; margin-bottom: 10px; font-size: 16px;">
+                        <span style="margin-right: 8px;">✓</span>Remediation
+                    </h4>
+                    <div style="color: #c8d0db; line-height: 1.7;">
+                        <p>Restrict the source of funds to a safe internal address rather than msg.sender during the setRoute route testing process. Alter _process function to prevent using msg.sender as the funding source by allowing only pre-approved entities to provide tokens. Follow best practices by designing internal tests to minimize reliance on external operator-controlled tokens.</p>
+                    </div>
+                </div>
+                
+                
+            </div>
+            
+        </div>
+        
+        
+        <div class="section">
+            <h2>README Badge</h2>
+            <p style="color: #c8d0db; margin-bottom: 20px;">
+                Add this badge to your project's README to showcase your security audit. 
+                Copy the snippet below and paste it into your README.md file.
+            </p>
+            
+            <div style="background: linear-gradient(135deg, rgba(36,52,71,0.6) 0%, rgba(26,35,50,0.6) 100%); 
+                        border: 1px solid rgba(100,181,246,0.2); 
+                        border-radius: 12px; 
+                        padding: 20px; 
+                        margin-bottom: 20px;">
+                
+                <h3 style="color: #81c7f7; margin-top: 0; margin-bottom: 15px;">Badge Preview</h3>
+                <div style="text-align: center; padding: 20px; background: rgba(15,20,25,0.8); border-radius: 8px; margin-bottom: 20px;">
+                    <img src="https://img.shields.io/badge/Audited_by-Hound-dc3545?style=flat-square&logo=security&logoColor=white" 
+                         alt="Hound Security Audit" 
+                         style="max-width: 100%; height: auto;" />
+                </div>
+                
+                <h3 style="color: #81c7f7; margin-bottom: 15px;">Markdown (for README.md)</h3>
+                <div style="position: relative; margin-bottom: 20px;">
+                    <pre style="background: #1a1a2e; 
+                                padding: 15px; 
+                                border-radius: 8px; 
+                                overflow-x: auto; 
+                                border: 1px solid #16213e;
+                                margin: 0;
+                                color: #e8ecf1;
+                                font-family: 'Courier New', monospace;
+                                font-size: 13px;"><code id="markdown-badge">[![Hound Security Audit](https://img.shields.io/badge/Audited_by-Hound-dc3545?style=flat-square&amp;logo=security&amp;logoColor=white)](hippofinal_security_report.html)</code></pre>
+                    <button onclick="(async()=>{try{await navigator.clipboard.writeText(document.getElementById('markdown-badge').innerText); this.innerText='Copied!'; setTimeout(()=>this.innerText='Copy',2000);}catch(e){}})()" 
+                            style="position: absolute; 
+                                   top: 10px; 
+                                   right: 10px; 
+                                   background: rgba(100,181,246,0.12); 
+                                   border: 1px solid rgba(100,181,246,0.35); 
+                                   color: #b3d4fc; 
+                                   font-size: 11px; 
+                                   padding: 6px 12px; 
+                                   border-radius: 6px; 
+                                   cursor: pointer;">
+                        Copy
+                    </button>
+                </div>
+                
+                <h3 style="color: #81c7f7; margin-bottom: 15px;">HTML</h3>
+                <div style="position: relative;">
+                    <pre style="background: #1a1a2e; 
+                                padding: 15px; 
+                                border-radius: 8px; 
+                                overflow-x: auto; 
+                                border: 1px solid #16213e;
+                                margin: 0;
+                                color: #e8ecf1;
+                                font-family: 'Courier New', monospace;
+                                font-size: 13px;"><code id="html-badge">&lt;a href=&quot;hippofinal_security_report.html&quot;&gt;&lt;img src=&quot;https://img.shields.io/badge/Audited_by-Hound-dc3545?style=flat-square&amp;logo=security&amp;logoColor=white&quot; alt=&quot;Hound Security Audit&quot; /&gt;&lt;/a&gt;</code></pre>
+                    <button onclick="(async()=>{try{await navigator.clipboard.writeText(document.getElementById('html-badge').innerText); this.innerText='Copied!'; setTimeout(()=>this.innerText='Copy',2000);}catch(e){}})()" 
+                            style="position: absolute; 
+                                   top: 10px; 
+                                   right: 10px; 
+                                   background: rgba(100,181,246,0.12); 
+                                   border: 1px solid rgba(100,181,246,0.35); 
+                                   color: #b3d4fc; 
+                                   font-size: 11px; 
+                                   padding: 6px 12px; 
+                                   border-radius: 6px; 
+                                   cursor: pointer;">
+                        Copy
+                    </button>
+                </div>
+            </div>
+            
+            <p style="color: #8892b0; font-size: 14px; font-style: italic;">
+                Note: Make sure to update the href link to point to the actual location of your security report.
+            </p>
+        </div>
+        
+        
+        <div class="footer">
+            <p>© 2025 Hound Security Team<br>
+            Report prepared by: GPT-4<br>
+        </div>
+    </div>
+</body>
+</html>
