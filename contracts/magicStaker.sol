@@ -61,6 +61,7 @@ contract magicStaker is OperatorManager {
     address[] public strategies;
     uint256 public pendingCooldownEpoch = type(uint256).max; // global tracking, max when no pending cooldowns
 
+    mapping(address => bool) public isStrategy; // Audit issue #25
     mapping(address => bool) public isRewardToken;
     mapping(address strategy => address harvester) public strategyHarvester;   
 
@@ -117,6 +118,7 @@ contract magicStaker is OperatorManager {
 
         // strategy 0 is immutable magic compounder
         strategies.push(_magicPounder);
+        isStrategy[_magicPounder] = true;
 
         // add reusd to rewards
         rewards.push(IERC20(0x57aB1E0003F623289CD798B1824Be09a793e4Bec));
@@ -722,6 +724,8 @@ contract magicStaker is OperatorManager {
         // Ensuring functionality/safety of strategy is outside of this scope
         // But this function is essential to THIS contract not breaking
 
+        require(isStrategy[_strategy] == false, "exists"); // Audit issue #25
+
         Strategy strategy = Strategy(_strategy);
 
         // Verify strategy has a desiredToken and that it is not RSUP
@@ -739,6 +743,8 @@ contract magicStaker is OperatorManager {
         require(strategy.totalSupply() == 0, "!supply0");
 
         strategies.push(_strategy);
+        isStrategy[_strategy] = true; // Audit issue #25
+
         emit StrategyAdded(_strategy);
     }
 
