@@ -539,7 +539,7 @@ describe("Setup", function () {
             it("'Yes' total increases by getVotingPower() of users 1-2", async () => {
                 var user1power = await MagicStaker.getVotingPower(users[1]);
                 var user2power = await MagicStaker.getVotingPower(users[2]);
-                var voteTotals = await MagicVoter.voteTotals(proposalCountBefore);
+                var voteTotals = await MagicVoter.voteTotals(voterAddress, proposalCountBefore);
                 await expect(voteTotals[0]).to.be.equal(user1power + user2power);
             });
             it("User 3-4 cannnot vote", async () => {
@@ -557,7 +557,7 @@ describe("Setup", function () {
             it("'No' total increases by 5 voting power", async () => {
                 var user5power = await MagicStaker.getVotingPower(users[5]);
                 //var user6power = await MagicStaker.getVotingPower(users[6]);
-                var voteTotals = await MagicVoter.voteTotals(proposalCountBefore);
+                var voteTotals = await MagicVoter.voteTotals(voterAddress, proposalCountBefore);
                 await expect(voteTotals[1]).to.be.equal(user5power);
                 //console.log(voteTotals);
                 var totalSupply = await MagicStaker.totalSupply();

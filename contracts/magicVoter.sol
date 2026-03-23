@@ -24,14 +24,16 @@ interface Voter {
 
 interface MagicStaker {
     function getVotingPower(address _account) external view returns (uint256);
-    function castVote(uint256 id, uint256 totalYes, uint256 totalNo) external;
+    function castVote(address _voter, uint256 id, uint256 totalYes, uint256 totalNo) external; 
 }
+
+import { Registry } from "./ifaces.sol"; // Audit issue #24
 
 contract magicVoter is OperatorManager {
     uint256 public constant MAX_PCT = 10000;
     uint256 public executionDelay = 4 days;
-
-    Voter public voter = Voter(0x11111111063874cE8dC6232cb5C1C849359476E6);
+    Registry public constant REGISTRY = Registry(0x10101010E0C3171D894B71B3400668aF311e7D94); // Audit issue #24
+    address public voter; // Native RSUP voting contract, set from Resupply registry (audit issue #24)
     MagicStaker public magicStaker;
 
     struct VoteData {
@@ -39,27 +41,30 @@ contract magicVoter is OperatorManager {
         uint256 no;
     }
 
-    mapping(address => mapping(uint256 => VoteData)) public votes; // user => proposalId => userVote
-    mapping(uint256 => VoteData) public voteTotals; // proposalId => VoteData
-    mapping(uint256 => bool) public executed; // proposalId => executed
+    mapping(address => mapping(address => mapping(uint256 => VoteData))) public votes; // user => voter => proposalId => userVote (audit issue #24)
+    mapping(address => mapping(uint256 => VoteData)) public voteTotals; // voter => proposalId => VoteData (audit issue #24)
+    mapping(address => mapping(uint256 => bool)) public executed; // voter => proposalId => executed (audit issue #24)
 
     event Executed(address to, uint256 value, bytes data, bool success);
-    event VoteCast(address indexed voter, uint256 indexed proposalId, uint256 weightYes, uint256 weightNo);
-    event VoteCommitted(uint256 indexed proposalId);
+    event VoteCast(address indexed user, address indexed voter, uint256 indexed proposalId, uint256 weightYes, uint256 weightNo); 
+    event VoteCommitted(address indexed voter, uint256 indexed proposalId); 
     event NewExecutionDelay(uint256 time);
     event NewMagicStaker(address magicStaker);
     event NewResupplyVoter(address resupplyVoter);
 
-    constructor(address _operator, address _manager) OperatorManager(_operator, _manager) {}
+    constructor(address _operator, address _manager) OperatorManager(_operator, _manager) {
+        // Get voter from Resupply registry (audit issue #24)
+        voter = REGISTRY.getAddress("VOTER");
+    }
 
 
     function canVote(uint256 id) public view returns(bool _canVote, uint32 _createdAt) {
 
-        require(!executed[id], "Executed");
+        require(!executed[voter][id], "Executed"); 
+        Voter _voter = Voter(voter);
+        (,uint32 createdAt,,bool processed,) = _voter.proposalData(id);
 
-        (,uint32 createdAt,,bool processed,) = voter.proposalData(id);
-
-        uint256 period = voter.votingPeriod();
+        uint256 period = _voter.votingPeriod();
         _createdAt = createdAt;
         if(_createdAt + period > block.timestamp && !processed) {
             _canVote = true;
@@ -76,7 +81,7 @@ contract magicVoter is OperatorManager {
         uint256 votingPower = magicStaker.getVotingPower(msg.sender);
         require(votingPower > 0, "No voting power");
 
-        VoteData memory userVote = votes[msg.sender][id];
+        VoteData memory userVote = votes[msg.sender][voter][id]; 
         require(userVote.yes + userVote.no == 0, "Already voted");
 
 
@@ -86,18 +91,18 @@ contract magicVoter is OperatorManager {
 
         userVote.yes = weightYes;
         userVote.no = weightNo;
-        votes[msg.sender][id] = userVote;
+        votes[msg.sender][voter][id] = userVote; 
 
-        VoteData storage totals = voteTotals[id];
+        VoteData storage totals = voteTotals[voter][id]; 
         totals.yes += weightYes;
         totals.no += weightNo;
-        emit VoteCast(msg.sender, id, weightYes, weightNo);
+        emit VoteCast(msg.sender, voter, id, weightYes, weightNo); 
         // if voting delay period over, cast vote automatically
         if(_createdAt + executionDelay < block.timestamp) {
-            try magicStaker.castVote(id, totals.yes, totals.no) {
+            try magicStaker.castVote(voter, id, totals.yes, totals.no) { 
                 // Vote cast
-                executed[id] = true;
-                emit VoteCommitted(id);
+                executed[voter][id] = true; 
+                emit VoteCommitted(voter, id); 
             } catch {
                 // May fail if quorum not met. This is okay. Leave open for other voters.
             }
@@ -109,10 +114,10 @@ contract magicVoter is OperatorManager {
         (bool _canVote, uint32 _createdAt) = canVote(id);
         require(_canVote, "!ended");
         require(_createdAt + executionDelay < block.timestamp, "!time");
-        VoteData storage totals = voteTotals[id];
-        magicStaker.castVote(id, totals.yes, totals.no);
-        executed[id] = true;
-        emit VoteCommitted(id);
+        VoteData storage totals = voteTotals[voter][id]; 
+        magicStaker.castVote(voter, id, totals.yes, totals.no); 
+        executed[voter][id] = true; 
+        emit VoteCommitted(voter, id); 
     }
 
     // doesn't need to be immutable since this contract does not handle balances
@@ -123,7 +128,7 @@ contract magicVoter is OperatorManager {
     }
 
     function setExecutionDelay(uint256 _time) external onlyOperator {
-        uint256 votingPeriod = voter.votingPeriod();
+        uint256 votingPeriod = Voter(voter).votingPeriod();
         require(_time < votingPeriod, "!tooLong");
         require(_time > 60*60*24*2, "!tooShort");
         executionDelay = _time;
@@ -132,7 +137,9 @@ contract magicVoter is OperatorManager {
 
     function setResupplyVoter(address _voter) external {
         require(msg.sender == address(magicStaker), "!auth");
-        voter = Voter(_voter);
+        // voting contract can be replaced even when active proposals exist, but those proposals will be unvoteable and uncommittable
+        // In the event that Resupply needs an emergency voter change while previous proposals are active, those proposals are voided
+        voter = _voter; 
         emit NewResupplyVoter(_voter);
     }
 }

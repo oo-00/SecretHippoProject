@@ -217,8 +217,9 @@ contract magicStaker is OperatorManager {
         return voter.createNewProposal(address(this), payload, description);
     }
 
-    function castVote(uint256 id, uint256 totalYes, uint256 totalNo) external {
+    function castVote(address _voter, uint256 id, uint256 totalYes, uint256 totalNo) external {
         require(msg.sender == magicVoter, "!voter");
+        require(_voter == address(voter), "!voter"); // audit issue #24 - ensure only votes for correct voter contract are cast
         uint256 total = totalYes + totalNo;
         require((totalSupply * 2000) / DENOM <= total, "!quorum"); // at least 20% of total supply must vote
         uint256 weightYes = (totalYes * DENOM) / total;
