@@ -2,6 +2,11 @@
 
 //  You should personally audit and test this code before using it.
 
+/*
+AUDIT ISSUE #8: _process function is tightly coupled to existing routes and tokens
+oracle indexes and decimals are hardcoded in the function, so adding new routes or tokens is likely to require an updated harvester contract.
+*/
+
 pragma solidity ^0.8.30;
 
 import { IERC20, SafeERC20 } from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';

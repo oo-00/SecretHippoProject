@@ -8,9 +8,9 @@ Can support multiple strategies, with initial two planned for compounding RSUP, 
 
 Non-transferable / Not a token. Staker dictates balances of strategies.
 
-### To do
-
-- UI
+### magicHarvester limitations:
+`_process` function is tightly coupled to existing routes and tokens
+oracle indexes and decimals are hardcoded in the function, so adding new routes or tokens is likely to require an updated harvester contract.
 
 ### Protections in place:
 
