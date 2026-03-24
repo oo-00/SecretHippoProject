@@ -166,6 +166,7 @@ contract magicHarvester is OperatorManager {
         require(_amountIn > 0, "!amount");
         IERC20(_tokenIn).safeTransferFrom(msg.sender, address(this), _amountIn);
         for (uint256 i = 0; i < routes[_tokenIn][_tokenOut].length; ++i) {
+            uint256 maxRouteSlippage = maxSlippage; // Track slippage across route to prevent sandwich attacks, reset for each route (audit issue #17)
             Route memory route = routes[_tokenIn][_tokenOut][i];
             uint256 bal = IERC20(route.tokenIn).balanceOf(address(this));
             require(bal > 0, "!balance");
@@ -178,9 +179,9 @@ contract magicHarvester is OperatorManager {
                 } else {
                     expectedOut = (bal * (10 ** 18)) / (oracle * SCRVUSD.pricePerShare() / (10 ** 18)); // And scrvUSD pools are denominated in crvUSD underlying
                 }
-                uint256 minOut = (expectedOut * (10000 - maxSlippage)) / 10000;
-
-                CurvePool(route.pool).exchange{value: 0}(int128(int256(route.indexIn)), int128(int256(route.indexOut)), bal, minOut);
+                uint256 minOut = (expectedOut * (10000 - maxRouteSlippage)) / 10000;
+                uint256 received = CurvePool(route.pool).exchange{value: 0}(int128(int256(route.indexIn)), int128(int256(route.indexOut)), bal, minOut);
+                maxRouteSlippage -= ((expectedOut - received) * 10000) / expectedOut;
             } else if (route.functionType == 1) {
                 // scrvUSD redeem
                 SCRVUSD.redeem(bal, address(this), address(this));
@@ -192,8 +193,9 @@ contract magicHarvester is OperatorManager {
                 } else {
                     expectedOut = (bal * AltCurvePool(route.pool).price_oracle(0)) / (10 ** 18);
                 }
-                uint256 minOut = (expectedOut * (10000 - maxSlippage)) / 10000;
-                AltCurvePool(route.pool).exchange{value: 0}(route.indexIn, route.indexOut, bal, minOut);
+                uint256 minOut = (expectedOut * (10000 - maxRouteSlippage)) / 10000;
+                uint256 received = AltCurvePool(route.pool).exchange{value: 0}(route.indexIn, route.indexOut, bal, minOut);
+                maxRouteSlippage -= ((expectedOut - received) * 10000) / expectedOut;
             } else if (route.functionType == 3) {
                 // sreUSD exchange
                 SreUSD(route.pool).deposit(bal, address(this));
@@ -205,8 +207,9 @@ contract magicHarvester is OperatorManager {
                 } else {
                     expectedOut = (bal * AltCurvePool(route.pool).price_oracle()) / (10 ** 18);
                 }
-                uint256 minOut = (expectedOut * (10000 - maxSlippage)) / 10000;
-                AltCurvePool(route.pool).exchange{value: 0}(route.indexIn, route.indexOut, bal, minOut);
+                uint256 minOut = (expectedOut * (10000 - maxRouteSlippage)) / 10000;
+                uint256 received = AltCurvePool(route.pool).exchange{value: 0}(route.indexIn, route.indexOut, bal, minOut);
+                maxRouteSlippage -= ((expectedOut - received) * 10000) / expectedOut;
             } else {
                 revert("!function");
             }
