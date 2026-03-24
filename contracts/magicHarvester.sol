@@ -146,7 +146,7 @@ contract magicHarvester is OperatorManager {
         uint256 startTokenOut = IERC20(strategyToken).balanceOf(address(this));
         for (uint256 i = 0; i < _tokensIn.length; ++i) {
             if(_tokensIn[i] == address(0)) {
-                break;
+                continue;
             }
             if(_amountsIn[i] == 0) {
                 continue;
