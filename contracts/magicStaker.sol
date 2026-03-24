@@ -402,6 +402,20 @@ contract magicStaker is OperatorManager {
         uint256 accountBalance = balanceOf(_account);
         uint256 stratLength = strategies.length;
         uint112[] memory accountWeights = accountWeightData[_account].weights;
+        uint256 userLength = accountWeights.length;
+
+        // one-time user weight array extension - audit issue #21
+        // gas-efficient approach, only loads as storage for effected users, and corrects weight array length for future operations
+        if(userLength < stratLength) {
+            // extend weights with 0s if user has no weights set for new strategies
+            uint112[] storage accountWeightsStorage = accountWeightData[_account].weights;
+            for (uint256 i = userLength; i < stratLength; ++i) {
+                accountWeightsStorage.push(0);
+            }
+            // Reload memory with extended array
+            accountWeights = accountWeightsStorage;
+        }
+
         for (uint256 i = 0; i < stratLength; ++i) {
             uint112 weight = accountWeights[i];
             if(weight == 0) {
