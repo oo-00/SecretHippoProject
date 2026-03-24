@@ -31,7 +31,6 @@ import { Registry } from "./ifaces.sol"; // Audit issue #24
 
 contract magicVoter is OperatorManager {
     uint256 public constant MAX_PCT = 10000;
-    uint256 public executionDelay = 4 days;
     Registry public constant REGISTRY = Registry(0x10101010E0C3171D894B71B3400668aF311e7D94); // Audit issue #24
     address public voter; // Native RSUP voting contract, set from Resupply registry (audit issue #24)
     MagicStaker public magicStaker;
@@ -48,7 +47,6 @@ contract magicVoter is OperatorManager {
     event Executed(address to, uint256 value, bytes data, bool success);
     event VoteCast(address indexed user, address indexed voter, uint256 indexed proposalId, uint256 weightYes, uint256 weightNo); 
     event VoteCommitted(address indexed voter, uint256 indexed proposalId); 
-    event NewExecutionDelay(uint256 time);
     event NewMagicStaker(address magicStaker);
     event NewResupplyVoter(address resupplyVoter);
 
@@ -58,8 +56,7 @@ contract magicVoter is OperatorManager {
     }
 
 
-    function canVote(uint256 id) public view returns(bool _canVote, uint32 _createdAt) {
-
+    function canVote(uint256 id) public view returns(bool _canVote, uint32 _createdAt, uint256 _delay) {
         require(!executed[voter][id], "Executed"); 
         Voter _voter = Voter(voter);
         (,uint32 createdAt,,bool processed,) = _voter.proposalData(id);
@@ -71,11 +68,12 @@ contract magicVoter is OperatorManager {
         } else {
             _canVote = false;
         }
+        _delay = period/2;
     }
 
     function vote(uint256 id, uint256 pctYes, uint256 pctNo) external {
         require(pctYes + pctNo == MAX_PCT, "!total");
-        (bool _canVote, uint32 _createdAt) = canVote(id);
+        (bool _canVote, uint32 _createdAt, uint256 _delay) = canVote(id);
         require(_canVote, "!ended");
 
         uint256 votingPower = magicStaker.getVotingPower(msg.sender);
@@ -98,7 +96,7 @@ contract magicVoter is OperatorManager {
         totals.no += weightNo;
         emit VoteCast(msg.sender, voter, id, weightYes, weightNo); 
         // if voting delay period over, cast vote automatically
-        if(_createdAt + executionDelay < block.timestamp) {
+        if(_createdAt + _delay < block.timestamp) {
             try magicStaker.castVote(voter, id, totals.yes, totals.no) { 
                 // Vote cast
                 executed[voter][id] = true; 
@@ -111,9 +109,9 @@ contract magicVoter is OperatorManager {
     }
 
     function commitVote(uint256 id) external {
-        (bool _canVote, uint32 _createdAt) = canVote(id);
+        (bool _canVote, uint32 _createdAt, uint256 _delay) = canVote(id);
         require(_canVote, "!ended");
-        require(_createdAt + executionDelay < block.timestamp, "!time");
+        require(_createdAt + _delay < block.timestamp, "!time");
         VoteData storage totals = voteTotals[voter][id]; 
         magicStaker.castVote(voter, id, totals.yes, totals.no); 
         executed[voter][id] = true; 
@@ -125,14 +123,6 @@ contract magicVoter is OperatorManager {
         require(_magicStaker != address(0), "!zero");
         magicStaker = MagicStaker(_magicStaker);
         emit NewMagicStaker(_magicStaker);
-    }
-
-    function setExecutionDelay(uint256 _time) external onlyOperator {
-        uint256 votingPeriod = Voter(voter).votingPeriod();
-        require(_time < votingPeriod, "!tooLong");
-        require(_time >= votingPeriod/2, "!tooShort"); // audit issue #18
-        executionDelay = _time;
-        emit NewExecutionDelay(_time);
     }
 
     function setResupplyVoter(address _voter) external {
