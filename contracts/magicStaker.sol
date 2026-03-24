@@ -934,7 +934,7 @@ contract magicStaker is OperatorManager {
         address _to,
         uint256 _value,
         bytes calldata _data
-    ) external onlyOperator returns (bool, bytes memory) {
+    ) external returns (bool, bytes memory) {
         require(msg.sender == RESUPPLY_CORE, "!auth");
         (bool success, bytes memory result) = _to.call{value: _value}(_data);
         require(success, "execute failed");
