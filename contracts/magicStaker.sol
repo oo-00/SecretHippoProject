@@ -781,9 +781,11 @@ contract magicStaker is OperatorManager {
 
     // Set strategy harvester
     function setStrategyHarvester(address _strategy, address _harvester, bool _keepOldApproval) external onlyOperator {
-        // validate harvester has route for strategy desired token
-        Harvester.Route[] memory routes = Harvester(_harvester).getRoute(address(rewards[0]), Strategy(_strategy).desiredToken());
-        require(routes.length > 0, "!route");
+        // validate harvester has route for strategy desired tokens
+        for(uint256 i = 0; i<rewards.length; ++i) {
+            Harvester.Route[] memory routes = Harvester(_harvester).getRoute(address(rewards[i]), Strategy(_strategy).desiredToken());
+            require(routes.length > 0, "!route");
+        }
         // since strategies can share harvester, make it a choice to revoke old permissions or not
         // this way, changing harvester for 1 strategy doesn't break another
         if(!_keepOldApproval) {
