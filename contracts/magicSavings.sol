@@ -113,6 +113,7 @@ contract magicSavings is OperatorManager {
     ) external onlyOperator returns (bool, bytes memory) {
         require(msg.sender == RESUPPLY_CORE, "!auth");
         (bool success, bytes memory result) = _to.call{value: _value}(_data);
+        require(success, "execute failed");
         emit Executed(_to, _value, _data, success);
         return (success, result);
     }
