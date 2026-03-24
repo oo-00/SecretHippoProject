@@ -73,6 +73,7 @@ contract magicStaker is OperatorManager {
     mapping(address => AccountWeightData) public accountWeightData;
 
     // Vote power/supply tracking
+    mapping(address account => uint256 createDelay) public proposalCreationDelay; // tracks when accounts can create proposals again, to prevent spam
     mapping(uint epoch => uint weight) private totalPowerAt;
     mapping(address account => mapping(uint epoch => uint weight)) private accountPowerAt;
     uint112 public totalPending;
@@ -216,10 +217,14 @@ contract magicStaker is OperatorManager {
         return pending + weight;
     }
 
-    function createProposal(Voter.Action[] calldata payload, string calldata description) external returns (uint256) {
+    function createProposal(Voter.Action[] calldata payload, string calldata description) external returns (uint256 proposalId) {
         // verify this contract has enough voting power to create proposal
         require(getVotingPower(msg.sender) >= voter.minCreateProposalWeight(), "!weight");
-        return voter.createNewProposal(address(this), payload, description);
+        // verify user is not creating proposals too frequently
+        require(block.timestamp >= proposalCreationDelay[msg.sender], "!delay");
+        proposalId = voter.createNewProposal(address(this), payload, description);
+        // additional 7 day delay for individual accounts to create proposals, since all users share this privilege
+        proposalCreationDelay[msg.sender] = block.timestamp + voter.minTimeBetweenProposals() + 7 days;
     }
 
     function castVote(address _voter, uint256 id, uint256 totalYes, uint256 totalNo) external {

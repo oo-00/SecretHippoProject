@@ -53,6 +53,7 @@ interface Voter {
     function createNewProposal(address account, Action[] calldata payload, string calldata description) external returns (uint256);
     function setDelegateApproval(address _delegate, bool _isApproved) external;
     function minCreateProposalWeight() external view returns (uint256);
+    function minTimeBetweenProposals() external view returns (uint256);
 }
 
 interface MagicVoter {
