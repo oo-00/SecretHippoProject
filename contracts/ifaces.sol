@@ -7,11 +7,19 @@ interface Registry {
 }
 
 interface Staker {
+    struct AccountData {
+        uint112 realizedStake; // Amount of stake that has fully realized weight.
+        uint112 pendingStake; // Amount of stake that has not yet fully realized weight.
+        uint16 lastUpdateEpoch;
+        bool isPermaStaker;
+    }
     function stake(uint _amount) external returns (uint);
     function cooldown(address _account, uint _amount) external returns (uint);
     function unstake(address _account, address _receiver) external returns (uint);
     function getReward(address _account) external;
     function cooldownEpochs() external view returns (uint);
+    function accountData(address _account) external view returns (AccountData memory);
+    function exit(address _account) external view returns (uint);
 }
 
 interface Strategy {

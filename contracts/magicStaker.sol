@@ -47,11 +47,12 @@ contract magicStaker is OperatorManager {
     uint256 public constant DENOM = 10000;
     uint256 public constant MAX_CALL_FEE = 100;  // 1 %
     Registry public constant REGISTRY = Registry(0x10101010E0C3171D894B71B3400668aF311e7D94);
-    Staker public constant STAKER = Staker(0x22222222E9fE38F6f1FC8C61b25228adB4D8B953);
+   
     IERC20 public constant RSUP = IERC20(0x419905009e4656fdC02418C7Df35B1E61Ed5F726);
 
     // Interfaced Contracts
     IERC20[] public rewards; // native reward tokens from staker
+    Staker public staker; // Native RSUP voting contract, set from Resupply registry (audit issue #20)
     Voter public voter; // Native RSUP voting contract, set from Resupply registry
 
     // System
@@ -60,6 +61,7 @@ contract magicStaker is OperatorManager {
     uint256 public CALL_FEE = 5;  // 0.05 % harvest caller incentive
     address[] public strategies;
     uint256 public pendingCooldownEpoch = type(uint256).max; // global tracking, max when no pending cooldowns
+    bool paused;
 
     mapping(address => bool) public isStrategy; // Audit issue #25
     mapping(address => bool) public isRewardToken;
@@ -111,8 +113,12 @@ contract magicStaker is OperatorManager {
     // CONSTRUCTOR
     // ------------------------------------------------------------------------
     constructor(address _magicPounder, address _magicVoter, address _operator, address _manager) OperatorManager(_operator, _manager) {
+        // assign resupply addresses from registry
+        voter = Voter(REGISTRY.getAddress("VOTER"));
+        staker = Staker(REGISTRY.getAddress("STAKER"));
+        
         // pre-approve staker
-        RSUP.approve(address(STAKER), type(uint256).max);
+        RSUP.approve(address(staker), type(uint256).max);
 
         magicVoter = _magicVoter;
 
@@ -123,7 +129,6 @@ contract magicStaker is OperatorManager {
         // add reusd to rewards
         rewards.push(IERC20(0x57aB1E0003F623289CD798B1824Be09a793e4Bec));
         isRewardToken[0x57aB1E0003F623289CD798B1824Be09a793e4Bec] = true;
-        voter = Voter(REGISTRY.getAddress("VOTER"));
     }
 
 
@@ -147,7 +152,7 @@ contract magicStaker is OperatorManager {
     }
 
     function isCooldownEpoch() public view returns (bool) {
-        uint256 cde = STAKER.cooldownEpochs();
+        uint256 cde = staker.cooldownEpochs();
         uint256 epoch = getEpoch();
         if(epoch % (cde + 1) == 0) {
             return true;
@@ -476,6 +481,7 @@ contract magicStaker is OperatorManager {
      * @param _amount Amount of RSUP to stake
      */
     function stake(uint256 _amount) external {
+        require(!paused, "paused");
         uint systemEpoch = getEpoch();
         require(_amount > 0, "0");
         // Make sure weights are set first, for account syncing
@@ -484,7 +490,7 @@ contract magicStaker is OperatorManager {
 
 
         RSUP.safeTransferFrom(msg.sender, address(this), _amount);
-        STAKER.stake(_amount); // only stake the requested amount, since contract may contain cooldown RSUP
+        staker.stake(_amount); // only stake the requested amount, since contract may contain cooldown RSUP
         totalSupply += _amount;
         
         (AccountStakeData memory acctData, ) = _checkpointAccount(msg.sender, systemEpoch);
@@ -506,7 +512,7 @@ contract magicStaker is OperatorManager {
      * @param _amount Amount of RSUP to cooldown
      */
     function cooldown(uint256 _amount) external {
-        uint256 cde = STAKER.cooldownEpochs();
+        uint256 cde = staker.cooldownEpochs();
         uint systemEpoch = getEpoch();
         uint256 coolPeriod = cde + 1;
         uint256 nextCoolPeriod = systemEpoch + coolPeriod;
@@ -561,7 +567,7 @@ contract magicStaker is OperatorManager {
         accountCooldownData[msg.sender].maturityEpoch = pendingCooldownEpoch;
 
         // call staker cooldown
-        STAKER.cooldown(address(this), _amount);
+        staker.cooldown(address(this), _amount);
 
         // change user strategy balances to reflect decreased balance
         _syncMagicBalance(msg.sender);
@@ -594,7 +600,7 @@ contract magicStaker is OperatorManager {
     }
 
     function _rsupUnstake() internal {
-        uint256 amount = STAKER.unstake(address(this), address(this));
+        uint256 amount = staker.unstake(address(this), address(this));
         require(amount > 0, "!rsupUnstake");
     }
 
@@ -615,7 +621,7 @@ contract magicStaker is OperatorManager {
         }
 
         // claim all rewards from staker
-        STAKER.getReward(address(this));
+        staker.getReward(address(this));
 
         address[10] memory positiveRewards;
         uint256[10] memory rewardBals;
@@ -674,9 +680,10 @@ contract magicStaker is OperatorManager {
     // MAGIC FUNCTIONS
     // ------------------------------------------------------------------------
     function magicStake(uint256 _amount) external {
+        require(!paused, "paused");
         require(msg.sender == strategies[0], "!magic");
         RSUP.safeTransferFrom(strategies[0], address(this), _amount);
-        STAKER.stake(_amount);
+        staker.stake(_amount);
         totalSupply += _amount;
         emit MagicStake(_amount);
     }
@@ -715,6 +722,11 @@ contract magicStaker is OperatorManager {
     // ------------------------------------------------------------------------
     // Operator FUNCTIONS
     // ------------------------------------------------------------------------
+
+    // Pause new RSUP stakes
+    function setPaused(bool _paused) external onlyOperator {
+        paused = _paused;
+    }
 
     // Set strategy harvester
     function setStrategyHarvester(address _strategy, address _harvester, bool _keepOldApproval) external onlyOperator {
@@ -794,6 +806,64 @@ contract magicStaker is OperatorManager {
         voter = Voter(_voter);
         MagicVoter(magicVoter).setResupplyVoter(_voter);
         emit ResupplyVoterSet(_voter);
+    }
+
+    // Migrate Resupply staker contract (audit issue #20)
+    /**
+     * @notice DAO restricted migration function for Resupply staker contract in the event of an upgrade
+     * @dev Requires native cooldownEpochs to be set to 0 for an atomic migration
+     * @dev Requires account pending stake to be 0 and new stakes to be paused
+     */
+    function migrateStaker() external {
+        require(msg.sender == RESUPPLY_CORE, "!auth");
+        require(paused, "!paused");
+        require(staker.cooldownEpochs() == 0, "!cooldown");
+
+        Staker.AccountData memory data = staker.accountData(address(this));
+        require(data.pendingStake == 0 || data.lastUpdateEpoch < getEpoch(), "!pending");
+
+        // use exit function to claim rewards and cooldown all staked RSUP
+        staker.exit(address(this));
+        
+        // since unstaked amount may include already pending cooldowns, we cannot re-stake the entire amount
+        // totalSupply should reflect all desired staked RSUP
+        staker.unstake(address(this), address(this));
+
+        // update staker address
+        address _staker = REGISTRY.getAddress("STAKER");
+        require(_staker.code.length > 0, "!staker");
+        staker = Staker(_staker);
+
+        // stake totalSupply to new staker
+        staker.stake(totalSupply);
+
+        // reflect that pending cooldowns have been unstaked
+        pendingCooldownEpoch = type(uint256).max;
+    }
+
+    /**
+     * @notice Fallback in case migration is not atomic
+     * @dev Requires manual migration to be already be completed
+     * @dev Requires new stakes to be paused and old staker to have 0 pending and realized stake for this contract to prevent balance corruption
+     */
+    function manualSetStaker() external {
+        require(msg.sender == RESUPPLY_CORE, "!auth");
+        require(paused, "!paused");
+        // verify old staker has been fully exited (does not check rewards)
+        Staker.AccountData memory data = staker.accountData(address(this));
+        require(data.pendingStake == 0 && data.realizedStake == 0, "!stake");
+
+        // update staker address
+        address _staker = REGISTRY.getAddress("STAKER");
+        require(_staker.code.length > 0, "!staker");
+        staker = Staker(_staker);
+
+        // verify new staker has correct amount staked
+        // if failure due to rounding, can be resolved by staking a small amount on behalf of unofficial staker
+        // prevents a bad migration from corrupting contract states
+        data = staker.accountData(address(this));
+        uint256 stakedAmount = data.pendingStake + data.realizedStake;
+        require(stakedAmount >= totalSupply, "!supplyParity");
     }
 
     // Set delegate approval for voter contract
