@@ -231,7 +231,7 @@ contract magicStaker is OperatorManager {
         require(msg.sender == magicVoter, "!voter");
         require(_voter == address(voter), "!voter"); // audit issue #24 - ensure only votes for correct voter contract are cast
         uint256 total = totalYes + totalNo;
-        require((totalSupply * 2000) / DENOM <= total, "!quorum"); // at least 20% of total supply must vote
+        require((totalPowerAt[totalLastUpdateEpoch] * 2000) / DENOM <= total, "!quorum"); // at least 20% of total voting power must vote
         uint256 weightYes = (totalYes * DENOM) / total;
         uint256 weightNo = DENOM - weightYes;
         voter.voteForProposal(address(this), id, weightYes, weightNo);
@@ -565,7 +565,7 @@ contract magicStaker is OperatorManager {
         // Remove from balances, supply
         acctData.realizedStake -= uint112(_amount);
         accountStakeData[msg.sender] = acctData;
-        totalPowerAt[systemEpoch] -= _amount;
+        // totalPowerAt[systemEpoch] -= _amount; // Removed to prevent changing quorum mid-epoch
         accountPowerAt[msg.sender][systemEpoch] -= _amount;
         totalSupply -= _amount;
 
