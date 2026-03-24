@@ -705,7 +705,7 @@ contract magicStaker is OperatorManager {
             }
             
             if (!alreadyApproved) {
-                IERC20(_rewardToken).approve(harvester, type(uint256).max);
+                IERC20(_rewardToken).forceApprove(harvester, type(uint256).max);
                 approvedHarvesters[approvedCount] = harvester;
                 approvedCount++;
             }
@@ -741,7 +741,7 @@ contract magicStaker is OperatorManager {
             }
             
             if (!alreadyRevoked) {
-                IERC20(_rewardToken).approve(harvester, 0);
+                IERC20(_rewardToken).forceApprove(harvester, 0);
                 revokedHarvesters[revokedCount] = harvester;
                 revokedCount++;
             }
@@ -778,13 +778,13 @@ contract magicStaker is OperatorManager {
             address oldHarvester = strategyHarvester[_strategy];
             if(oldHarvester != address(0)) {
                 for(uint256 i = 0; i<rewards.length; ++i) {
-                    rewards[i].approve(oldHarvester, 0);
+                    rewards[i].forceApprove(oldHarvester, 0);
                 }
             }
         }
         strategyHarvester[_strategy] = _harvester;
         for(uint256 i = 0; i<rewards.length; ++i) {
-            rewards[i].approve(_harvester, type(uint256).max);
+            rewards[i].forceApprove(_harvester, type(uint256).max);
         }
         emit StrategyHarvesterSet(_strategy, _harvester);
     }

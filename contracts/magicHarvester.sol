@@ -95,7 +95,7 @@ contract magicHarvester is OperatorManager {
 
     function approveStrategy(address _strategy, bool _approve) external onlyOperator {
         address strategyToken = Strategy(_strategy).desiredToken();
-        IERC20(strategyToken).approve(_strategy, _approve ? type(uint256).max : 0);
+        IERC20(strategyToken).forceApprove(_strategy, _approve ? type(uint256).max : 0);
         emit StrategyApproval(strategyToken, _strategy, _approve);
     }
 
@@ -117,7 +117,7 @@ contract magicHarvester is OperatorManager {
         if(_removeApprovals) {
             // remove token approvals for each step
             for (uint256 i = 0; i < routes[_tokenIn][_tokenOut].length; ++i) {
-                IERC20(routes[_tokenIn][_tokenOut][i].tokenIn).approve(routes[_tokenIn][_tokenOut][i].pool, 0);
+                IERC20(routes[_tokenIn][_tokenOut][i].tokenIn).forceApprove(routes[_tokenIn][_tokenOut][i].pool, 0);
             }
         }
         for (uint256 i = 0; i < _routes.length; ++i) {
@@ -127,7 +127,7 @@ contract magicHarvester is OperatorManager {
             }
             // approve token for curve pools
             if(_routes[i].functionType != 1) { // scrvUSD redeem doesn't need approval
-                IERC20(_routes[i].tokenIn).approve(_routes[i].pool, type(uint256).max);
+                IERC20(_routes[i].tokenIn).forceApprove(_routes[i].pool, type(uint256).max);
             }
         }
         // overwrite routes
