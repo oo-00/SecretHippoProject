@@ -365,6 +365,8 @@ contract magicStaker is OperatorManager {
     function syncAccount() external {
         require(unclaimedMagicTokens(msg.sender) > 0, "0");
         checkpointAccount(msg.sender);
+        uint systemEpoch = getEpoch();
+        _checkpointTotal(systemEpoch);
         // claim any magic pounder share difference
         _syncMagicBalance(msg.sender);
         // change user strategy balances to reflect any yield
@@ -373,8 +375,9 @@ contract magicStaker is OperatorManager {
 
     function setWeights(uint112[] memory _weights) public {
         AccountWeightData memory weightData = accountWeightData[msg.sender];
+        uint systemEpoch = getEpoch();
         // can only change weights once per epoch
-        require(weightData.lastUpdateEpoch < getEpoch(), "!epoch");
+        require(weightData.lastUpdateEpoch < systemEpoch, "!epoch");
         uint256 stratLength = strategies.length;
         require(stratLength == _weights.length, "!length");
 
@@ -387,9 +390,10 @@ contract magicStaker is OperatorManager {
 
         accountWeightData[msg.sender] = AccountWeightData({
             weights: _weights,
-            lastUpdateEpoch: uint16(getEpoch())
+            lastUpdateEpoch: uint16(systemEpoch)
         });
-
+        checkpointAccount(msg.sender);
+        _checkpointTotal(systemEpoch);
         _syncMagicBalance(msg.sender);
         _syncAccount(msg.sender);
 
