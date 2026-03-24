@@ -560,19 +560,21 @@ describe("Setup", function () {
                 var voteTotals = await MagicVoter.voteTotals(voterAddress, proposalCountBefore);
                 await expect(voteTotals[1]).to.be.equal(user5power);
                 //console.log(voteTotals);
-                var totalSupply = await MagicStaker.totalSupply();
-                var totalVoted = voteTotals[0] + voteTotals[1];
-                console.log("           Pct voted:    "+totalVoted*100n/totalSupply)
             });
             it("Should not allow non-local-quorum vote", async () => {
                 await expect(MagicVoter.connect(signers.operator).commitVote(proposalCountBefore)).to.be.revertedWith("!quorum");
+                var createdEpoch = await MagicVoter.timeToEpoch((await voter.getProposalData(proposalCountBefore)).createdAt);
+                console.log("> Created epoch: "+createdEpoch);
+                await MagicStaker.connect(signers.users[1]).checkpointTotal(); // totalPowerAt needs checkpointed for accurate quorum calculation
+                var totalPowerAt = await MagicStaker.totalPowerAt(createdEpoch);
+                var voteTotals = await MagicVoter.voteTotals(voterAddress, proposalCountBefore);
+                var totalVoted = voteTotals[0] + voteTotals[1];
+                console.log("           Pct voted:    "+totalVoted*100n/totalPowerAt)
             });
             it("Should cast vote automatically when User 6 votes Yes", async () => {
                 var voteBefore = await voter.accountVoteWeights(MagicStakerAddress, proposalCountBefore);
                 expect(await MagicVoter.connect(signers.users[6]).vote(proposalCountBefore, 10000n, 0n)).to.emit("VoteCast")
                 var voteAfter = await voter.accountVoteWeights(MagicStakerAddress, proposalCountBefore);
-                //console.log(voteBefore);
-                //console.log(voteAfter);
             });
             
         });

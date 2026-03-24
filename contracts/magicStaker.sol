@@ -74,9 +74,10 @@ contract magicStaker is OperatorManager {
 
     // Vote power/supply tracking
     mapping(address account => uint256 createDelay) public proposalCreationDelay; // tracks when accounts can create proposals again, to prevent spam
-    mapping(uint epoch => uint weight) private totalPowerAt;
-    mapping(address account => mapping(uint epoch => uint weight)) private accountPowerAt;
+    mapping(uint epoch => uint weight) public totalPowerAt;
+    mapping(address account => mapping(uint epoch => uint weight)) public accountPowerAt;
     uint112 public totalPending;
+    uint112 public removalsPending;
     uint16 public totalLastUpdateEpoch;
 
     // ------------------------------------------------------------------------
@@ -227,11 +228,16 @@ contract magicStaker is OperatorManager {
         proposalCreationDelay[msg.sender] = block.timestamp + voter.minTimeBetweenProposals() + 7 days;
     }
 
-    function castVote(address _voter, uint256 id, uint256 totalYes, uint256 totalNo) external {
+    function castVote(uint256 createdEpoch, address _voter, uint256 id, uint256 totalYes, uint256 totalNo) external {
+        
+        uint256 systemEpoch = getEpoch();
+        if(createdEpoch > totalLastUpdateEpoch) {
+            _checkpointTotal(systemEpoch);
+        }
         require(msg.sender == magicVoter, "!voter");
         require(_voter == address(voter), "!voter"); // audit issue #24 - ensure only votes for correct voter contract are cast
         uint256 total = totalYes + totalNo;
-        require((totalPowerAt[totalLastUpdateEpoch] * 2000) / DENOM <= total, "!quorum"); // at least 20% of total voting power must vote
+        require((totalPowerAt[createdEpoch] * 2000) / DENOM <= total, "!quorum"); // at least 20% of total voting power must vote
         uint256 weightYes = (totalYes * DENOM) / total;
         uint256 weightNo = DENOM - weightYes;
         voter.voteForProposal(address(this), id, weightYes, weightNo);
@@ -340,17 +346,20 @@ contract magicStaker is OperatorManager {
     function _checkpointTotal(uint systemEpoch) internal returns (uint) {
         // These two share a storage slot.
         uint16 lastUpdateEpoch = totalLastUpdateEpoch;
-        uint pending = totalPending;
-
         uint weight = totalPowerAt[lastUpdateEpoch];
 
         if (lastUpdateEpoch == systemEpoch) {
             return weight;
         }
 
+        uint pending = totalPending;
+        uint removals = removalsPending;
         totalLastUpdateEpoch = uint16(systemEpoch);
         weight += pending;
+        weight -= removals;
+
         totalPending = 0;
+        removalsPending = 0;
 
         while (lastUpdateEpoch < systemEpoch) {
             unchecked { lastUpdateEpoch++; }
@@ -565,7 +574,7 @@ contract magicStaker is OperatorManager {
         // Remove from balances, supply
         acctData.realizedStake -= uint112(_amount);
         accountStakeData[msg.sender] = acctData;
-        // totalPowerAt[systemEpoch] -= _amount; // Removed to prevent changing quorum mid-epoch
+        removalsPending += uint112(_amount);
         accountPowerAt[msg.sender][systemEpoch] -= _amount;
         totalSupply -= _amount;
 

@@ -24,7 +24,7 @@ interface Voter {
 
 interface MagicStaker {
     function getVotingPower(address _account) external view returns (uint256);
-    function castVote(address _voter, uint256 id, uint256 totalYes, uint256 totalNo) external; 
+    function castVote(uint256 createdEpoch, address _voter, uint256 id, uint256 totalYes, uint256 totalNo) external; 
 }
 
 import { Registry } from "./ifaces.sol"; // Audit issue #24
@@ -55,6 +55,9 @@ contract magicVoter is OperatorManager {
         voter = REGISTRY.getAddress("VOTER");
     }
 
+    function timeToEpoch(uint256 timestamp) public view returns (uint256 epoch) {
+        return (timestamp - 1741824000) / 604800;
+    }
 
     function canVote(uint256 id) public view returns(bool _canVote, uint32 _createdAt, uint256 _delay) {
         require(!executed[voter][id], "Executed"); 
@@ -97,7 +100,8 @@ contract magicVoter is OperatorManager {
         emit VoteCast(msg.sender, voter, id, weightYes, weightNo); 
         // if voting delay period over, cast vote automatically
         if(_createdAt + _delay < block.timestamp) {
-            try magicStaker.castVote(voter, id, totals.yes, totals.no) { 
+            uint256 createdEpoch = timeToEpoch(_createdAt);
+            try magicStaker.castVote(createdEpoch, voter, id, totals.yes, totals.no) { 
                 // Vote cast
                 executed[voter][id] = true; 
                 emit VoteCommitted(voter, id); 
@@ -113,7 +117,8 @@ contract magicVoter is OperatorManager {
         require(_canVote, "!ended");
         require(_createdAt + _delay < block.timestamp, "!time");
         VoteData storage totals = voteTotals[voter][id]; 
-        magicStaker.castVote(voter, id, totals.yes, totals.no); 
+        uint256 createdEpoch = timeToEpoch(_createdAt);
+        magicStaker.castVote(createdEpoch, voter, id, totals.yes, totals.no); 
         executed[voter][id] = true; 
         emit VoteCommitted(voter, id); 
     }
