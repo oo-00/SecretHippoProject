@@ -181,7 +181,11 @@ contract magicHarvester is OperatorManager {
                 }
                 uint256 minOut = (expectedOut * (10000 - maxRouteSlippage)) / 10000;
                 uint256 received = CurvePool(route.pool).exchange{value: 0}(int128(int256(route.indexIn)), int128(int256(route.indexOut)), bal, minOut);
-                maxRouteSlippage -= ((expectedOut - received) * 10000) / expectedOut;
+                if(received < expectedOut) {
+                    maxRouteSlippage -= ((expectedOut - received) * 10000) / expectedOut;
+                } else {
+                    maxRouteSlippage += ((received - expectedOut) * 10000) / expectedOut;
+                }
             } else if (route.functionType == 1) {
                 // scrvUSD redeem
                 SCRVUSD.redeem(bal, address(this), address(this));
@@ -195,7 +199,11 @@ contract magicHarvester is OperatorManager {
                 }
                 uint256 minOut = (expectedOut * (10000 - maxRouteSlippage)) / 10000;
                 uint256 received = AltCurvePool(route.pool).exchange{value: 0}(route.indexIn, route.indexOut, bal, minOut);
-                maxRouteSlippage -= ((expectedOut - received) * 10000) / expectedOut;
+                if(received < expectedOut) {
+                    maxRouteSlippage -= ((expectedOut - received) * 10000) / expectedOut;
+                } else {
+                    maxRouteSlippage += ((received - expectedOut) * 10000) / expectedOut;
+                }
             } else if (route.functionType == 3) {
                 // sreUSD exchange
                 SreUSD(route.pool).deposit(bal, address(this));
@@ -209,7 +217,11 @@ contract magicHarvester is OperatorManager {
                 }
                 uint256 minOut = (expectedOut * (10000 - maxRouteSlippage)) / 10000;
                 uint256 received = AltCurvePool(route.pool).exchange{value: 0}(route.indexIn, route.indexOut, bal, minOut);
-                maxRouteSlippage -= ((expectedOut - received) * 10000) / expectedOut;
+                if(received < expectedOut) {
+                    maxRouteSlippage -= ((expectedOut - received) * 10000) / expectedOut;
+                } else {
+                    maxRouteSlippage += ((received - expectedOut) * 10000) / expectedOut;
+                }
             } else {
                 revert("!function");
             }
