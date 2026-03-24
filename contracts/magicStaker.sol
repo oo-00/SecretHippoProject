@@ -699,6 +699,32 @@ contract magicStaker is OperatorManager {
         require(!isRewardToken[_rewardToken], "!exists");
         isRewardToken[_rewardToken] = true;
         rewards.push(IERC20(_rewardToken));
+
+        // Approve to all unique harvesters (audit issue #19)
+        uint256 stratLength = strategies.length;
+        address[] memory approvedHarvesters = new address[](stratLength);
+        uint256 approvedCount;
+        
+        for (uint256 i = 0; i < stratLength; ++i) {
+            address harvester = strategyHarvester[strategies[i]];
+            if (harvester == address(0)) continue;
+            
+            // Check if already approved
+            bool alreadyApproved;
+            for (uint256 j = 0; j < approvedCount; ++j) {
+                if (approvedHarvesters[j] == harvester) {
+                    alreadyApproved = true;
+                    break;
+                }
+            }
+            
+            if (!alreadyApproved) {
+                IERC20(_rewardToken).approve(harvester, type(uint256).max);
+                approvedHarvesters[approvedCount] = harvester;
+                approvedCount++;
+            }
+        }
+
         emit NewRewardToken(_rewardToken);
     }
 
@@ -709,6 +735,31 @@ contract magicStaker is OperatorManager {
         // replace index with last index
         rewards[_rewardIndex] = rewards[rewards.length - 1];
         rewards.pop();
+
+        // Revoke approvals from all unique harvesters (audit issue #19)
+        uint256 stratLength = strategies.length;
+        address[] memory revokedHarvesters = new address[](stratLength);
+        uint256 revokedCount;
+        
+        for (uint256 i = 0; i < stratLength; ++i) {
+            address harvester = strategyHarvester[strategies[i]];
+            if (harvester == address(0)) continue;
+            
+            // Check if already revoked
+            bool alreadyRevoked;
+            for (uint256 j = 0; j < revokedCount; ++j) {
+                if (revokedHarvesters[j] == harvester) {
+                    alreadyRevoked = true;
+                    break;
+                }
+            }
+            
+            if (!alreadyRevoked) {
+                IERC20(_rewardToken).approve(harvester, 0);
+                revokedHarvesters[revokedCount] = harvester;
+                revokedCount++;
+            }
+        }
         emit RemoveRewardToken(_rewardToken);
     }
 
