@@ -130,7 +130,7 @@ contract magicVoter is OperatorManager {
     function setExecutionDelay(uint256 _time) external onlyOperator {
         uint256 votingPeriod = Voter(voter).votingPeriod();
         require(_time < votingPeriod, "!tooLong");
-        require(_time > 60*60*24*2, "!tooShort");
+        require(_time >= votingPeriod/2, "!tooShort"); // audit issue #18
         executionDelay = _time;
         emit NewExecutionDelay(_time);
     }
