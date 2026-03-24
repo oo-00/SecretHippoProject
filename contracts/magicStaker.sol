@@ -105,7 +105,7 @@ contract magicStaker is OperatorManager {
     error OldEpoch();
     error InvalidAmount();
     error InsufficientRealizedStake();
-    
+    error CooldownsPending();
 
     // ------------------------------------------------------------------------
     // CONSTRUCTOR
@@ -523,9 +523,14 @@ contract magicStaker is OperatorManager {
         if (pendingCooldownEpoch <= systemEpoch) {
             _rsupUnstake();
             pendingCooldownEpoch = nextCoolPeriod;
-        } else if (pendingCooldownEpoch != nextCoolPeriod) {
-            // If pendingCooldownEpoch is out of sync with cooldownEpochs, correct
+        } else if (pendingCooldownEpoch == type(uint256).max) {
+            // if no pending cooldown, set pendingCooldownEpoch to next cooldown epoch
             pendingCooldownEpoch = nextCoolPeriod;
+        } else if (pendingCooldownEpoch != nextCoolPeriod) {
+            // If pendingCooldownEpoch is out of sync with nextCoolPeriod,
+            // there has been a change to cooldownEpochs in staker contract
+            // cooldowns are locked until previous maturity is reached - audit issue #22
+            revert CooldownsPending();
         }
 
         // Remove from balances, supply
