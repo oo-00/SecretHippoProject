@@ -612,14 +612,6 @@ contract magicStaker is OperatorManager {
      * @dev Rewards are divided among strategies.
      */
     function harvest() external {
-        // before claiming, check if RSUP is a reward token
-        // It's not likely to ever become a reward token, but if it were to be added, it could interfere
-        // with cooldown balances sitting in this contract.
-        uint256 rsupBal;
-        if (isRewardToken[address(RSUP)]) {
-            rsupBal = RSUP.balanceOf(address(this));
-        }
-
         // claim all rewards from staker
         staker.getReward(address(this));
 
@@ -630,10 +622,6 @@ contract magicStaker is OperatorManager {
         // give caller their cut of all rewards
         for (uint256 r = 0; r < rewLength; ++r) {
             uint256 rewardBal = rewards[r].balanceOf(address(this));
-            // if RSUP token, subtract any balance that was already here
-            if (address(rewards[r]) == address(RSUP)) {
-                rewardBal -= rsupBal;
-            }
             // if no rewards, skip
             if (rewardBal == 0) {
                 continue;
@@ -663,9 +651,6 @@ contract magicStaker is OperatorManager {
                 if(i == stratLength - 1) {
                     // last strategy, assign all remaining shares to avoid rounding issues
                     uint256 lastRewardBal = rewards[r].balanceOf(address(this));
-                    if(positiveRewards[r] == address(RSUP)) {
-                        lastRewardBal -= rsupBal;
-                    }
                     stratShares[r] = lastRewardBal;
                     continue;
                 }
@@ -694,6 +679,7 @@ contract magicStaker is OperatorManager {
 
     // Add reward token
     function addRewardToken(address _rewardToken) external onlyManager {
+        require(_rewardToken != address(RSUP), "!rsup"); // audit issue #14
         require(_rewardToken != address(0), "!zeroAddress");
         require(rewards.length < 10, "!maxRewards");
         require(!isRewardToken[_rewardToken], "!exists");
