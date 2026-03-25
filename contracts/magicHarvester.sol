@@ -170,8 +170,8 @@ contract magicHarvester is OperatorManager {
     function _process(address _tokenIn, address _tokenOut, uint256 _amountIn) internal {
         require(_amountIn > 0, "!amount");
         IERC20(_tokenIn).safeTransferFrom(msg.sender, address(this), _amountIn);
+        uint256 maxRouteSlippage = maxSlippage; // Track slippage across route to prevent sandwich attacks, reset for each route (audit issue #17)
         for (uint256 i = 0; i < routes[_tokenIn][_tokenOut].length; ++i) {
-            uint256 maxRouteSlippage = maxSlippage; // Track slippage across route to prevent sandwich attacks, reset for each route (audit issue #17)
             Route memory route = routes[_tokenIn][_tokenOut][i];
             uint256 bal = IERC20(route.tokenIn).balanceOf(address(this));
             require(bal > 0, "!balance");
