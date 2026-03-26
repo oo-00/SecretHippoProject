@@ -65,7 +65,8 @@ contract magicPounder is OperatorManager {
                 sharesTotalSupply += newShares - oldShares;
             }
             sharesOf[_account] = newShares;
-            totalSupply = totalSupply - userBalance + _balance;
+            uint256 actualBalance = (newShares * totalSupply) / sharesTotalSupply;
+            totalSupply = totalSupply - userBalance + actualBalance;
             emit NewBalance(_account, _balance, newShares);
         } else {
             emit NewBalance(_account, _balance, oldShares);
