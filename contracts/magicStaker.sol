@@ -909,6 +909,7 @@ contract magicStaker is OperatorManager {
         // verify old staker has been fully exited (does not check rewards)
         Staker.AccountData memory data = staker.accountData(address(this));
         require(data.pendingStake == 0 && data.realizedStake == 0, "!stake");
+        require(pendingCooldownEpoch == type(uint256).max, "!cooldowns");
 
         // update staker address
         address _staker = REGISTRY.getAddress("STAKER");
