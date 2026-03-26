@@ -327,6 +327,16 @@ contract magicStaker is OperatorManager {
     }
 
     /**
+     * @notice Checkpoint total system weight with epoch limit, if gas limits prevent checkpointing in a single transaction
+     * @param targetEpoch epoch number which we want to checkpoint up to.
+     */
+    function checkpointTotalWithLimit(uint256 targetEpoch) external returns (uint) {
+        uint systemEpoch = getEpoch();
+        if (targetEpoch >= systemEpoch) targetEpoch = systemEpoch;
+        return _checkpointTotal(targetEpoch);
+    }
+
+    /**
         @notice Get the current total system weight
         @dev Also updates local storage values for total weights. Using
              this function over it's `view` counterpart is preferred for
