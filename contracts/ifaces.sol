@@ -19,7 +19,7 @@ interface Staker {
     function getReward(address _account) external;
     function cooldownEpochs() external view returns (uint);
     function accountData(address _account) external view returns (AccountData memory);
-    function exit(address _account) external view returns (uint);
+    function exit(address _account) external returns (uint);
 }
 
 interface Strategy {

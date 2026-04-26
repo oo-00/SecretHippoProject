@@ -61,7 +61,7 @@ contract magicStaker is OperatorManager {
     uint256 public CALL_FEE = 5;  // 0.05 % harvest caller incentive
     address[] public strategies;
     uint256 public pendingCooldownEpoch = type(uint256).max; // global tracking, max when no pending cooldowns
-    bool paused;
+    bool public paused;
 
     mapping(address => bool) public isStrategy; // Audit issue #25
     mapping(address => bool) public isRewardToken;
@@ -899,6 +899,8 @@ contract magicStaker is OperatorManager {
         // update staker address
         address _staker = REGISTRY.getAddress("STAKER");
         require(_staker.code.length > 0, "!staker");
+        RSUP.approve(address(staker), 0);
+        RSUP.approve(_staker, type(uint256).max);
         staker = Staker(_staker);
 
         // stake totalSupply to new staker
@@ -924,6 +926,8 @@ contract magicStaker is OperatorManager {
         // update staker address
         address _staker = REGISTRY.getAddress("STAKER");
         require(_staker.code.length > 0, "!staker");
+        RSUP.approve(address(staker), 0);
+        RSUP.approve(_staker, type(uint256).max);
         staker = Staker(_staker);
 
         // verify new staker has correct amount staked
