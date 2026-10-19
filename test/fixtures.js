@@ -1,6 +1,5 @@
 var { ethers } = require("hardhat");
 
-var { MagicPounderModule, MagicVoterModule, MagicStakerModule, MagicHarvesterModule, MagicSavingsModule } = require("../ignition/modules/Deployment");
 
 var erc20Abi = [
     "function approve(address spender, uint256 amount) external returns (bool)",
@@ -63,6 +62,17 @@ async function registrySetUp() {
     return registry;
 }
 
+// Live mainnet deployments of the magic suite (ignition deployed_addresses.json is stale)
+const LIVE = {
+    magicPounder: "0x29833854b62e21FEF00240F55f399A486970706f",
+    magicVoter: "0x3419905EfCE945238286427F2A3C1495cFF41990",
+    magicStaker: "0x64199056cAFF992227ff7c6f544F238b65141990",
+    magicHarvester: "0xdd3107a84397d5d38dd00adfa22148486970706f",
+    magicSavings: "0xb419905ae0deaca80892b873900e419a2b641990",
+};
+
+// Returns the live, already configured magic suite on the mainnet fork. Used with loadFixture so every
+// test file starts from the same fork-start snapshot.
 async function setUpSmartContracts() {
     var reUSD = await reUSDSetUp();
     var RSUP = await RSUPSetUp();
@@ -72,65 +82,45 @@ async function setUpSmartContracts() {
     var create2Factory = await create2SetUp();
     var registry = await registrySetUp();
 
-    var operator = "0xAdE9e51C9E23d64E538A7A38656B78aB6Bcc349e";
-    var manager = "0xdC7C7F0bEA8444c12ec98Ec626ff071c6fA27a19";
+    const MagicPounder = await ethers.getContractAt("magicPounder", ethers.getAddress(LIVE.magicPounder));
+    const MagicVoter = await ethers.getContractAt("magicVoter", ethers.getAddress(LIVE.magicVoter));
+    const MagicStaker = await ethers.getContractAt("magicStaker", ethers.getAddress(LIVE.magicStaker));
+    const MagicHarvester = await ethers.getContractAt("magicHarvester", ethers.getAddress(LIVE.magicHarvester));
+    const MagicSavings = await ethers.getContractAt("magicSavings", ethers.getAddress(LIVE.magicSavings));
 
-    const { MagicPounder } = await ignition.deploy(MagicPounderModule, {
-    parameters: {
-        DeployMagicPounder: {
-        _operator: operator,
-        _manager: manager,
-        },
-    },
-    });
+    // live roles (operator is RESUPPLY_CORE after handover)
+    var operator = await MagicStaker.operator();
+    var manager = await MagicStaker.manager();
 
-    const { MagicVoter } = await ignition.deploy(MagicVoterModule, {
-    parameters: {
-        DeployMagicVoter: {
-        _operator: operator,
-        _manager: manager,
-        },
-    },
-    });
-
-    var pounder = await MagicPounder.getAddress();
-    var mvoter = await MagicVoter.getAddress();
-
-    const { MagicStaker } = await ignition.deploy(MagicStakerModule, {
-    parameters: {
-        DeployMagicStaker: {
-        _magicPounder: pounder,
-        _magicVoter: mvoter,
-        _operator: operator,
-        _manager: manager,
-        },
-    },
-    });
-
-    var magicStakerAddress = await MagicStaker.getAddress();
-
-    const { MagicHarvester } = await ignition.deploy(MagicHarvesterModule, {
-    parameters: {
-        DeployMagicHarvester: {
-        _operator: operator,
-        _manager: manager,
-        },
-    },
-    });
-
-    var sreUSDAddress = "0x557AB1e003951A73c12D16F0fEA8490E39C33C35";
-    const { MagicSavings } = await ignition.deploy(MagicSavingsModule, {
-    parameters: {
-        DeployMagicSavings: {
-        _magicStaker: magicStakerAddress,
-        _operator: operator,
-        _manager: manager
-        },
-    },
-    });
-
+    // Mine one local block so the snapshot loadFixture reverts to is a local block, not the remote fork block.
+    // Without this, gas fee estimates after a revert can come out below the next block's base fee.
+    await ethers.provider.send("evm_mine", []);
 
     return { MagicPounder, MagicVoter, MagicStaker, MagicHarvester, MagicSavings, manager, operator, reUSD, RSUP, sreUSD, staker, voter, create2Factory, registry };
 }
 
-module.exports = { setUpSmartContracts };
+// usRSUP solvency at the RSUP level:
+// - what the vault holds plus its magicStaker cooldown covers every unclaimed payout of a cooled batch;
+// - the recorded stake covers the queue, fees and locked profit, so totalAssets (the share holders' RSUP) is
+//   recordedStake minus those and never saturates at 0;
+// - the recorded stake is really there in magicStaker (to within pounder rounding dust).
+async function expectVaultSolvent(vault, MagicStaker, RSUP, accounts) {
+    const { expect } = require("chai");
+    const vaultAddress = await vault.getAddress();
+    let owed = 0n;
+    for (const a of accounts) {
+        for (const id of await vault.accountActiveBatchIds(a)) {
+            const b = await vault.batches(id);
+            if (b.maturityEpoch > 0n) owed += await vault.requestOf(a, id);
+        }
+    }
+    const [held] = await MagicStaker.accountCooldownData(vaultAddress);
+    expect((await RSUP.balanceOf(vaultAddress)) + held).to.be.gte(owed);
+    const recorded = await vault.recordedStake();
+    const excluded = (await vault.backlogOwed()) + (await vault.feePot()) + (await vault.lockedProfit());
+    expect(recorded).to.be.gte(excluded);
+    expect(await vault.totalAssets()).to.equal(recorded - excluded);
+    expect((await vault.currentStake()) + 10n ** 6n).to.be.gte(recorded);
+}
+
+module.exports = { setUpSmartContracts, LIVE, expectVaultSolvent };

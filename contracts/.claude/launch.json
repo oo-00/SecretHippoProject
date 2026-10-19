@@ -1,0 +1,20 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "ui-fork",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "-c",
+        "cd /home/tg/js/rsup/rsup-ui/HippoProjectUI && NEXT_PUBLIC_RPC_URL=http://127.0.0.1:8547 NEXT_PUBLIC_USRSUP_ADDRESS=0xF25cA1371D640bDaD2fE8958121eB393E61C56bb npx next dev -p 3005"
+      ],
+      "port": 3005
+    },
+    {
+      "name": "ui-static",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "3006", "--directory", "/home/tg/js/rsup/rsup-ui/HippoProjectUI/out"],
+      "port": 3006
+    }
+  ]
+}

@@ -19,5 +19,6 @@ ignition/deployments/
 
 # Echidna fuzzing corpus and artifacts
 echidna-corpus
+echidna-corpus-usrsup
 crytic-export
 .venv/

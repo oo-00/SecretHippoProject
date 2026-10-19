@@ -1,0 +1,26 @@
+# Echidna configuration for the usRSUP invariant harness (test/fuzzing/usRSUPEchidna.sol)
+# Run: SOLC_VERSION=0.8.30 echidna test/fuzzing/usRSUPEchidna.sol --contract usRSUPEchidna --config echidna.usRSUP.yaml
+# Needs solc 0.8.30 installed through solc-select (`solc-select install 0.8.30`); SOLC_VERSION selects it for this run only.
+
+testMode: assertion
+testLimit: 50000
+seqLen: 100
+shrinkLimit: 5000
+timeout: 1800
+
+# time only moves through the harness's advanceTime() action
+maxTimeDelay: 0
+
+# mock RSUP token at the real RSUP address, which usRSUP and MockMagicStaker hardcode
+deployContracts: [["0x419905009e4656fdC02418C7Df35B1E61Ed5F726", "MockRSUP"]]
+
+corpusDir: "echidna-corpus-usrsup"
+coverage: true
+
+# Don't add --compile-remove-metadata: with it, Echidna can't map usRSUP's runtime code back to source and the
+# coverage report only shows the constructor.
+cryticArgs:
+  - --solc-remaps
+  - "@openzeppelin=node_modules/@openzeppelin"
+  - --solc-args
+  - "--optimize --optimize-runs 200 --evm-version prague"
